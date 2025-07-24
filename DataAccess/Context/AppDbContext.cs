@@ -20,8 +20,10 @@ namespace DataAccess.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            // var char da ekle, Fluent API ile
 
-            // Kullanıcı adı zorunlu olsun
+
+            // Kullanıcı adı zorunlu olsun 
             modelBuilder.Entity<User>()
                 .Property(u => u.Username)
                 .IsRequired();

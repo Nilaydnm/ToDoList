@@ -9,7 +9,7 @@ namespace Entities
     public class BaseEntity : IEntity
     {
         public int Id { get; set; }
-
+        // ortak özellikleri topladığımız sınıf
        
     }
 }
