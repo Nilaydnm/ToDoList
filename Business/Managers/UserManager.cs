@@ -38,12 +38,6 @@ namespace Business.Managers
             return await _userRepository.GetByIdAsync(id);
         }
 
-        public async Task AddAsync(User user)
-        {
-            await _userRepository.AddAsync(user);
-            await _userRepository.SaveChangesAsync();
-        }
-
         public async Task UpdateAsync(User user)
         {
             _userRepository.Update(user);
