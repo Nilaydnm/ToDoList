@@ -21,7 +21,22 @@ namespace DataAccess.Context
         {
             base.OnModelCreating(modelBuilder);
             // var char da ekle, Fluent API ile
+            modelBuilder.Entity<User>()
+            .Property(u => u.Username)
+            .IsRequired()
+            .HasColumnType("varchar(20)");
 
+            
+            modelBuilder.Entity<User>()
+                .Property(u => u.Password)
+                .IsRequired()
+                .HasColumnType("varchar(100)");
+
+            
+            modelBuilder.Entity<ToDo>()
+                .Property(t => t.Title)
+                .IsRequired()
+                .HasColumnType("varchar(200)");
 
             // Kullanıcı adı zorunlu olsun 
             modelBuilder.Entity<User>()

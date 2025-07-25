@@ -14,6 +14,16 @@ namespace DataAccess.Repositories
     {
         private readonly AppDbContext _context;
 
+        public async Task UpdateAsync(ToDo todo)
+        {
+            _context.ToDos.Update(todo);
+        }
+
+        public async Task DeleteAsync(ToDo todo)
+        {
+            _context.ToDos.Remove(todo);
+        }
+
         public EfToDoRepository(AppDbContext context) : base(context)
         {
             _context = context;
@@ -22,6 +32,13 @@ namespace DataAccess.Repositories
         {
             await _context.SaveChangesAsync();
         }
+        public async Task<List<ToDo>> GetByUserIdAsync(int userId)
+        {
+            return await _context.ToDos
+                                 .Where(t => t.UserId == userId)
+                                 .ToListAsync();
+        }
+
         public async Task<List<ToDo>> GetToDosByUserIdAsync(int userId)
         {
             return await _context.ToDos

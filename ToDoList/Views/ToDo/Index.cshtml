@@ -1,0 +1,47 @@
+﻿@model List<Entities.ToDo>
+
+@{
+    ViewData["Title"] = "ToDo Listesi";
+}
+
+<h2>ToDo Listesi</h2>
+
+<form asp-action="Add" method="post">
+    <input type="text" name="title" placeholder="Yeni görev ekleyin..." required />
+    <button type="submit">Ekle</button>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Görev</th>
+            <th>Durum</th>
+            <th>Oluşturulma</th>
+            <th>Tamamlanma</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td>
+                    <form asp-action="ToggleComplete" method="post" style="display:inline">
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <input type="checkbox" onchange="this.form.submit()" @(item.IsCompleted ? "checked" : "") />
+                        @(item.IsCompleted ? "Tamamlandı" : "Bekliyor")
+                    </form>
+                </td>
+                <td>@item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@(item.CompletedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+                <td>
+                    <form asp-action="Delete" method="post" onsubmit="return confirm('Bu görevi silmek istediğinizden emin misiniz?')" style="display:inline">
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <button type="submit" class="btn btn-danger btn-sm">Sil</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

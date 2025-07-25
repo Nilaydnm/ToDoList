@@ -15,6 +15,13 @@ namespace Business.Managers
         private readonly IUserRepository _userRepository;
         private readonly PasswordHasher<User> _passwordHasher = new();
 
+        public async Task AddAsync(User user)
+        {
+            user.Password = _passwordHasher.HashPassword(user, user.Password);
+            await _userRepository.AddAsync(user);
+            await _userRepository.SaveChangesAsync();
+        }
+
 
         public UserManager(IUserRepository userRepository)
         {

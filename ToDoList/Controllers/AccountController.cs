@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-
 namespace ToDoList.Controllers
 {
     public class AccountController : Controller
@@ -28,6 +27,8 @@ namespace ToDoList.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(User user)
         {
+         
+
             await _userService.AddAsync(user);
             return RedirectToAction("Login");
         }
@@ -62,7 +63,7 @@ namespace ToDoList.Controllers
 
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Index", "ToDo");
                 }
             }
 

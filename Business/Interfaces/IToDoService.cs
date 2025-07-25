@@ -14,5 +14,6 @@ namespace Business.Interfaces
         Task AddAsync(ToDo todo);
         Task UpdateAsync(ToDo todo);
         Task DeleteAsync(ToDo todo);
+        Task<List<ToDo>> GetByUserIdAsync(int userId);
     }
 }
