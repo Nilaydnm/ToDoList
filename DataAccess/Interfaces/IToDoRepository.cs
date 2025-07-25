@@ -12,5 +12,6 @@ namespace DataAccess.Interfaces
         // Kullanıcı ID'sine göre ToDo listelerini getir
         // bu  da diğer işlemlerden farklı olduğundan ayrı bir metot olarak tanımladık
         Task<List<ToDo>> GetToDosByUserIdAsync(int userId);
+        Task SaveChangesAsync();
     }
 }

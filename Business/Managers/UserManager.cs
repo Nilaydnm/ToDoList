@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Identity;
 using DataAccess.Interfaces;
 using Entities;
 using System.Text;
@@ -12,6 +13,8 @@ namespace Business.Managers
     public class UserManager : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly PasswordHasher<User> _passwordHasher = new();
+
 
         public UserManager(IUserRepository userRepository)
         {
