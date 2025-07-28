@@ -37,6 +37,7 @@ builder.Services.AddControllersWithViews();
 // 5️⃣ Uygulamayı oluştur
 var app = builder.Build();
 
+
 // 6️⃣ Ortam kontrolleri
 if (!app.Environment.IsDevelopment())
 {

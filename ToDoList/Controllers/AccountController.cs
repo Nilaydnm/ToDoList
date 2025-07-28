@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ToDoList.Controllers
@@ -27,10 +28,31 @@ namespace ToDoList.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(User user)
         {
-         
+            try
+            {
+                //  Aynı kullanıcı adı var mı diye bak
+                var existingUser = await _userService.GetByUsernameAsync(user.Username);
 
-            await _userService.AddAsync(user);
-            return RedirectToAction("Login");
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError("", "Bu kullanıcı adı zaten alınmış. Lütfen farklı bir kullanıcı adı girin.");
+                    return View(user);
+                }
+
+                //  Yeni kullanıcıyı ekle
+                await _userService.AddAsync(user);
+                return RedirectToAction("Login");
+            }
+            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("IX_Users_Username") == true)
+            {
+                ModelState.AddModelError("", "Bu kullanıcı adı zaten alınmış. Lütfen farklı bir kullanıcı adı girin.");
+                return View(user);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Kayıt işlemi sırasında bir hata oluştu: " + ex.Message);
+                return View(user);
+            }
         }
 
         // GET: /Account/Login

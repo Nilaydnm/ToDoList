@@ -20,8 +20,16 @@ namespace DataAccess.Repositories
             _context = context;
         }
 
+        public Task<List<User>> GetByUserIdAsync(int userId)
+        {
+            return _context.Users
+                .Where(u => u.Id == userId)
+                .ToListAsync();
+        }
+
         public async Task<User> GetByUsernameAsync(string username)
         {
+            // firstor default ilk eşleşmeyi kabul ediyor aynı isimde biri kayıt olmasın bunu business katmanında kontrol et!
             return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
         }
        

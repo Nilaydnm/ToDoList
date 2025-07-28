@@ -17,6 +17,8 @@ namespace Business.Managers
 
         public async Task AddAsync(User user)
         {
+
+            //FLuentVlidation kullanarak kullanıcı doğrulama işlemleri yapılabilir
             user.Password = _passwordHasher.HashPassword(user, user.Password);
             await _userRepository.AddAsync(user);
             await _userRepository.SaveChangesAsync();
@@ -54,6 +56,20 @@ namespace Business.Managers
         {
             return await _userRepository.GetAllAsync();
         }
+
+        public Task<List<User>> GetByUserIdAsync(int userId)
+        {
+            return _userRepository.GetByUserIdAsync(userId);
+        }
+        public async Task CheckIfUsernameExistsAsync(string username)
+        {
+            var existingUser = await _userRepository.GetByUsernameAsync(username);
+            if (existingUser != null)
+            {
+                throw new Exception("Bu kullanıcı adı zaten alınmış. Lütfen farklı bir kullanıcı adı girin.");
+            }
+        }
+
     }
 }
 

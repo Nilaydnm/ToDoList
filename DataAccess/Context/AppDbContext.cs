@@ -19,6 +19,7 @@ namespace DataAccess.Context
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
             base.OnModelCreating(modelBuilder);
             // var char da ekle, Fluent API ile
             modelBuilder.Entity<User>()
@@ -26,7 +27,10 @@ namespace DataAccess.Context
             .IsRequired()
             .HasColumnType("varchar(20)");
 
-            
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique(); 
+
             modelBuilder.Entity<User>()
                 .Property(u => u.Password)
                 .IsRequired()
