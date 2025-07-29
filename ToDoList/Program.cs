@@ -1,63 +1,71 @@
-﻿using DataAccess;
-using DataAccess.Context;
-using Business.Interfaces;
+﻿using Business.Interfaces;
 using Business.Managers;
+using Business.ValidationRules;
+using DataAccess;
+using DataAccess.Context;
 using DataAccess.Interfaces;
 using DataAccess.Repositories;
-using Microsoft.EntityFrameworkCore;
+using Entities;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1️⃣ Servis Katmanı Bağımlılıkları (Business → DataAccess)
+// Katmanları ekliyoruz
 builder.Services.AddScoped<IUserService, UserManager>();
 builder.Services.AddScoped<IUserRepository, EfUserRepository>();
-
+builder.Services.AddScoped<IValidator<User>, UserValidator>();
 builder.Services.AddScoped<IToDoService, ToDoManager>();
 builder.Services.AddScoped<IToDoRepository, EfToDoRepository>();
 
-// 2️⃣ Veritabanı Bağlantısı (DbContext)
+// FluentValidation ayarı (otomatik validasyonu kapat!)
+builder.Services.AddControllersWithViews();
+    //.AddFluentValidation(fv =>
+    //{
+    //    fv.RegisterValidatorsFromAssemblyContaining<UserValidator>();
+    //    fv.DisableDataAnnotationsValidation = true;
+    //    fv.ImplicitlyValidateChildProperties = true;
+    //    fv.ImplicitlyValidateRootCollectionElements = true;
+    //    fv.AutomaticValidationEnabled = true; // ❗ Burası hatayı çözen nokta
+    //});
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-// 3️⃣ Cookie Authentication Ayarları
+
+builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+//builder.Services.AddFluentValidation(builder => builder.RegisterValidatorsFromAssembly(Assembly.GetExecutingAssembly()));
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
-        options.LoginPath = "/Account/Login";          // Giriş yapılmamışsa yönlendirme
-        options.LogoutPath = "/Account/Logout";        // Çıkış
-        options.AccessDeniedPath = "/Account/Login";   // Gerekirse yetkisiz erişim
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/Login";
     });
 
-// 4️⃣ MVC için controller ve view servisi
-builder.Services.AddControllersWithViews();
-
-// 5️⃣ Uygulamayı oluştur
 var app = builder.Build();
 
-
-// 6️⃣ Ortam kontrolleri
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
-// 7️⃣ Ortak middleware ayarları
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-// 8️⃣ Authentication ve Authorization middleware
-app.UseAuthentication(); // Giriş işlemleri için
-app.UseAuthorization();  // Roller vs. için (şu an kullanılmıyor ama hazır dursun)
+app.UseAuthentication();
+app.UseAuthorization();
 
-// 9️⃣ Varsayılan route
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=ToDo}/{action=Index}/{id?}");
 
-// 10️⃣ Uygulamayı çalıştır
 app.Run();

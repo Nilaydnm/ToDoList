@@ -1,10 +1,10 @@
 ﻿using Business.Interfaces;
 using Entities;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ToDoList.Controllers
@@ -12,10 +12,12 @@ namespace ToDoList.Controllers
     public class AccountController : Controller
     {
         private readonly IUserService _userService;
+        private readonly IValidator<User> _validator;
 
-        public AccountController(IUserService userService)
+        public AccountController(IUserService userService, IValidator<User> validator)
         {
             _userService = userService;
+            _validator = validator;
         }
 
         // GET: /Account/Register
@@ -28,25 +30,23 @@ namespace ToDoList.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(User user)
         {
-            try
-            {
-                //  Aynı kullanıcı adı var mı diye bak
-                var existingUser = await _userService.GetByUsernameAsync(user.Username);
+            // ❗ Otomatik yerine manuel validation
+            var validationResult = await _validator.ValidateAsync(user);
 
-                if (existingUser != null)
+            if (!validationResult.IsValid)
+            {
+                foreach (var error in validationResult.Errors)
                 {
-                    ModelState.AddModelError("", "Bu kullanıcı adı zaten alınmış. Lütfen farklı bir kullanıcı adı girin.");
-                    return View(user);
+                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
                 }
 
-                //  Yeni kullanıcıyı ekle
+                return View(user); // Hataları göster
+            }
+
+            try
+            {
                 await _userService.AddAsync(user);
                 return RedirectToAction("Login");
-            }
-            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("IX_Users_Username") == true)
-            {
-                ModelState.AddModelError("", "Bu kullanıcı adı zaten alınmış. Lütfen farklı bir kullanıcı adı girin.");
-                return View(user);
             }
             catch (Exception ex)
             {

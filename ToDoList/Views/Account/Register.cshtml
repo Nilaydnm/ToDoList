@@ -2,29 +2,28 @@
 
 <h2>Kayıt Ol</h2>
 
-
+<!-- Genel hataları göster -->
 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
 <form asp-action="Register" method="post">
     <div>
         <label>Kullanıcı Adı:</label>
-        <input asp-for="Username" required />
+        <input asp-for="Username" class="form-control" />
         <span asp-validation-for="Username" class="text-danger"></span>
     </div>
     <div>
         <label>Şifre:</label>
-        <input asp-for="Password" type="password" required />
+        <input asp-for="Password" type="password" class="form-control" />
         <span asp-validation-for="Password" class="text-danger"></span>
     </div>
     <div>
-        <button type="submit">Kayıt Ol</button>
+        <button type="submit" class="btn btn-primary">Kayıt Ol</button>
     </div>
 </form>
 
 <p>
     Zaten bir hesabın var mı? <a href="/Account/Login">Giriş yap</a>
 </p>
-
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
