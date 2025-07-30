@@ -12,12 +12,11 @@ namespace ToDoList.Controllers
     public class AccountController : Controller
     {
         private readonly IUserService _userService;
-        private readonly IValidator<User> _validator;
 
-        public AccountController(IUserService userService, IValidator<User> validator)
+        public AccountController(IUserService userService)
         {
             _userService = userService;
-            _validator = validator;
+            
         }
 
         // GET: /Account/Register
@@ -31,21 +30,12 @@ namespace ToDoList.Controllers
         public async Task<IActionResult> Register(User user)
         {
             // ❗ Otomatik yerine manuel validation
-            var validationResult = await _validator.ValidateAsync(user);
-
-            if (!validationResult.IsValid)
-            {
-                foreach (var error in validationResult.Errors)
-                {
-                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
-                }
-
-                return View(user); // Hataları göster
-            }
 
             try
             {
                 await _userService.AddAsync(user);
+
+
                 return RedirectToAction("Login");
             }
             catch (Exception ex)
@@ -85,7 +75,7 @@ namespace ToDoList.Controllers
 
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-                    return RedirectToAction("Index", "ToDo");
+                    return RedirectToAction("Index", "ToDoGroup");
                 }
             }
 
@@ -100,3 +90,4 @@ namespace ToDoList.Controllers
         }
     }
 }
+//todo.cshtml de indexi kaldır yerine groutakileri koy bi öyle dene

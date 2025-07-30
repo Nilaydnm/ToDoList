@@ -15,6 +15,6 @@ namespace Business.Interfaces
         Task AddAsync(T entity);
         Task UpdateAsync(T entity);
         Task DeleteAsync(T entity);
-        Task<List<T>> GetByUserIdAsync(int userId); // Kullanıcı ID'sine göre listeleme
+        Task<List<T>> GetByUserIdAsync(int userId); 
     }
 }

@@ -16,6 +16,7 @@ namespace DataAccess.Context
 
         public DbSet<User> Users { get; set; }
         public DbSet<ToDo> ToDos { get; set; }
+        public DbSet<ToDoGroup> ToDoGroups { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

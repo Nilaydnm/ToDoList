@@ -1,0 +1,67 @@
+﻿@model List<Entities.ToDoGroup>
+
+@{
+    ViewData["Title"] = "Yapılacaklar";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-3">Yeni Yapılacaklar Ekle</h2>
+
+    <form method="post" asp-action="Add" class="row g-2 align-items-center mb-4">
+        <div class="col-auto">
+            <input type="text" name="title" class="form-control" placeholder="Proje başlığı girin..." required />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Ekle</button>
+        </div>
+    </form>
+
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var group in Model)
+        {
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <a asp-controller="ToDoGroup" asp-action="Detail" asp-route-id="@group.Id" class="text-decoration-none">
+                            @group.Title
+                        </a>
+                    </h4>
+                    <div>
+                        <span class="text-muted me-3">@group.ToDos.Count görev</span>
+                        <!-- Gerekirse Düzenle ve Sil butonları -->
+                        <form asp-action="Delete" method="post" style="display:inline;" onsubmit="return confirm('Bu projeyi silmek istediğinize emin misiniz?')">
+                            <input type="hidden" name="id" value="@group.Id" />
+                            <button class="btn btn-sm btn-outline-danger">Sil</button>
+                        </form>
+                    </div>
+                </div>
+
+                @if (group.ToDos != null && group.ToDos.Any())
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var task in group.ToDos)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="bi bi-check2-square text-success me-2"></i> @task.Title
+                                </span>
+                                <small class="text-muted">
+                                    @(task.Deadline.HasValue ? $"Deadline: {task.Deadline.Value:dd.MM.yyyy HH:mm}" : "-")
+                                </small>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="card-body text-muted">Henüz yapılacaklar eklenmemiş.</div>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="alert alert-info">Henüz herhangi yapılacaklar başlığı eklenmemiş.</div>
+    }
+</div>

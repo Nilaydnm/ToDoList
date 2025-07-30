@@ -17,5 +17,6 @@ namespace DataAccess.Interfaces
         void Update(T entity);
         void Remove(T entity);
         Task SaveChangesAsync();
+       
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Business.Interfaces;
+using DataAccess.Interfaces;
 using Entities;
 using FluentValidation;
 using System;
@@ -11,10 +12,10 @@ namespace Business.ValidationRules
 {
     public class UserValidator : AbstractValidator<User>
     {
-        private readonly IUserService _userService;
-        public UserValidator(IUserService userService)
+        private readonly IUserRepository _userRepository;
+        public UserValidator(IUserRepository userRepository)
         {
-            _userService = userService;
+            _userRepository = userRepository;
 
             RuleFor(user => user.Username)
                 .NotEmpty().WithMessage("Kullanıcı adı boş bırakılamaz!")
@@ -22,7 +23,7 @@ namespace Business.ValidationRules
                 .Matches("^[a-zA-Z0-9]+$").WithMessage("Kullanıcı adı yalnızca harf ve rakamlardan oluşabilir.")
                 .Must((user) => 
                 {
-                    var existingUser =  _userService.GetByUsernameAsync(user).Result;
+                    var existingUser =  _userRepository.GetByUsernameAsync(user).Result;
                     return existingUser == null;
                 }).WithMessage("Bu kullanıcı adı zaten alınmış. Lütfen farklı bir kullanıcı adı girin.");
             

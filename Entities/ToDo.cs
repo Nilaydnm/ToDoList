@@ -16,5 +16,10 @@ namespace Entities
         // Foreign Key + Navigation Property
         public int UserId { get; set; }
         public User User { get; set; }
+
+        public int? GroupId { get; set; }
+        public ToDoGroup Group { get; set; }
+        public DateTime? Deadline { get; set; }
+
     }
 }

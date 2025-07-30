@@ -1,10 +1,11 @@
 ﻿using Business.Interfaces;
+using DataAccess.Interfaces;
+using Entities;
+using FluentValidation;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Identity;
-using DataAccess.Interfaces;
-using Entities;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,20 +15,29 @@ namespace Business.Managers
     {
         private readonly IUserRepository _userRepository;
         private readonly PasswordHasher<User> _passwordHasher = new();
+        private readonly IValidator<User> _validator;
+
+
+        public UserManager(IUserRepository userRepository, IValidator<User> validator)
+        {
+            _userRepository = userRepository;
+            _validator = validator;
+        }
 
         public async Task AddAsync(User user)
         {
+
+            var validationResult = await _validator.ValidateAsync(user);
+            if (!validationResult.IsValid)
+            {
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                throw new ValidationException("Kullanıcı doğrulama hataları: " + string.Join(", ", errors));
+            }
 
             //FLuentVlidation kullanarak kullanıcı doğrulama işlemleri yapılabilir
             user.Password = _passwordHasher.HashPassword(user, user.Password);
             await _userRepository.AddAsync(user);
             await _userRepository.SaveChangesAsync();
-        }
-
-
-        public UserManager(IUserRepository userRepository)
-        {
-            _userRepository = userRepository;
         }
 
         public async Task<User> GetByUsernameAsync(string username)

@@ -13,15 +13,17 @@ using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
+//builder.Services.AddScoped<IValidator<User>, UserValidator>();
 
-// Katmanları ekliyoruz
+builder.Services.AddScoped<IToDoGroupService, ToDoGroupManager>();
+builder.Services.AddScoped<IToDoGroupRepository, ToDoGroupRepository>();
 builder.Services.AddScoped<IUserService, UserManager>();
 builder.Services.AddScoped<IUserRepository, EfUserRepository>();
 builder.Services.AddScoped<IValidator<User>, UserValidator>();
 builder.Services.AddScoped<IToDoService, ToDoManager>();
 builder.Services.AddScoped<IToDoRepository, EfToDoRepository>();
 
-// FluentValidation ayarı (otomatik validasyonu kapat!)
+
 builder.Services.AddControllersWithViews();
     //.AddFluentValidation(fv =>
     //{
@@ -39,7 +41,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-//builder.Services.AddFluentValidation(builder => builder.RegisterValidatorsFromAssembly(Assembly.GetExecutingAssembly()));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
@@ -66,6 +67,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=ToDo}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}");
 
 app.Run();
