@@ -43,5 +43,13 @@ namespace DataAccess.Repositories
             .Where(g => g.Id == userId)
             .ToListAsync();
         }
+        public async Task<List<ToDoGroup>> GetGroupsWithTasksByUserIdAsync(int userId)
+        {
+            return await _context.ToDoGroups
+                .Include(g => g.ToDos)
+                .Where(g => g.UserId == userId)
+                .ToListAsync();
+        }
+
     }
 }

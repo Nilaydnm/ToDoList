@@ -83,6 +83,11 @@ namespace Business.Managers
         {
             return await _toDoGroupRepository.GetByUserIdAsync(userId);
         }
+        public async Task<List<ToDoGroup>> GetGroupsWithTasksByUserIdAsync(int userId)
+        {
+            return await _toDoGroupRepository.GetGroupsWithTasksByUserIdAsync(userId);
+        }
+
     }
 }
 

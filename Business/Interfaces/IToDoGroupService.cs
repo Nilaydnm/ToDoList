@@ -14,5 +14,7 @@ namespace Business.Interfaces
         Task<ToDoGroup> GetByIdWithTasksAsync(int id);
 
         Task DeleteAsync(ToDoGroup group);
+        Task<List<ToDoGroup>> GetGroupsWithTasksByUserIdAsync(int userId);
+
     }
 }

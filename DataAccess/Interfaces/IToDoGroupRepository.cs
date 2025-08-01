@@ -13,6 +13,8 @@ namespace DataAccess.Interfaces
         Task<ToDoGroup> GetByIdWithTasksAsync(int id);
         Task<List<ToDoGroup>> GetByUserIdAsync(int userId);
         Task<List<ToDoGroup>> GetGroupsWithTasksAsync();
+        Task<List<ToDoGroup>> GetGroupsWithTasksByUserIdAsync(int userId);
+
     }
 }
 

@@ -95,6 +95,6 @@ namespace ToDoList.Controllers
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
         }
+
     }
 }
-//todo.cshtml de indexi kaldır yerine grouptakileri koy bi öyle dene

@@ -23,6 +23,8 @@ builder.Services.AddScoped<IValidator<User>, UserValidator>();
 builder.Services.AddScoped<IToDoService, ToDoManager>();
 builder.Services.AddValidatorsFromAssemblyContaining<ToDoGroupValidator>();
 builder.Services.AddScoped<IToDoRepository, EfToDoRepository>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(EfGenericRepository<>));
+
 
 
 
