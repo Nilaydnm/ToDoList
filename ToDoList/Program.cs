@@ -21,7 +21,9 @@ builder.Services.AddScoped<IUserService, UserManager>();
 builder.Services.AddScoped<IUserRepository, EfUserRepository>();
 builder.Services.AddScoped<IValidator<User>, UserValidator>();
 builder.Services.AddScoped<IToDoService, ToDoManager>();
+builder.Services.AddValidatorsFromAssemblyContaining<ToDoGroupValidator>();
 builder.Services.AddScoped<IToDoRepository, EfToDoRepository>();
+
 
 
 builder.Services.AddControllersWithViews();
@@ -31,7 +33,7 @@ builder.Services.AddControllersWithViews();
     //    fv.DisableDataAnnotationsValidation = true;
     //    fv.ImplicitlyValidateChildProperties = true;
     //    fv.ImplicitlyValidateRootCollectionElements = true;
-    //    fv.AutomaticValidationEnabled = true; // ❗ Burası hatayı çözen nokta
+    //    fv.AutomaticValidationEnabled = true; 
     //});
 
 builder.Services.AddDbContext<AppDbContext>(options =>

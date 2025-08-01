@@ -8,7 +8,20 @@
     <h2 class="mb-3">@Model.Title</h2>
 
     <a asp-controller="ToDoGroup" asp-action="Index" class="btn btn-secondary mb-3">← Proje Listesine Dön</a>
-
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (var modelState in ViewData.ModelState.Values)
+                {
+                    foreach (var error in modelState.Errors)
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                }
+            </ul>
+        </div>
+    }
     <form asp-controller="ToDo" asp-action="Add" method="post" class="mb-4 row g-2 align-items-center">
         <input type="hidden" name="groupId" value="@Model.Id" />
         <div class="col-auto">

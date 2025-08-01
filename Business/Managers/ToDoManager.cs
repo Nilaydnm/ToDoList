@@ -49,5 +49,10 @@ namespace Business.Managers
             await _toDoRepository.DeleteAsync(todo);
             await _toDoRepository.SaveChangesAsync();
         }
+
+        public Task<User> GetByUsernameAsync(string username)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

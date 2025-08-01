@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Business.Interfaces
 {
-    public interface IToDoService
+    public interface IToDoService : IGenericService<ToDo>
     {
         Task<List<ToDo>> GetAllAsync();
         Task<ToDo> GetByIdAsync(int id);

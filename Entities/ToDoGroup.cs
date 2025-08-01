@@ -9,7 +9,7 @@ namespace Entities
     public class ToDoGroup : IEntity
     {
         public int Id { get; set; }
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? Deadline { get; set; }
         public List<ToDo> ToDos { get; set; }

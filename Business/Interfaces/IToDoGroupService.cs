@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Business.Interfaces
 {
-    public interface IToDoGroupService
+    public interface IToDoGroupService : IGenericService<ToDoGroup>
     {
         Task<List<ToDoGroup>> GetGroupsWithTasksAsync();
         Task AddAsync(ToDoGroup group);

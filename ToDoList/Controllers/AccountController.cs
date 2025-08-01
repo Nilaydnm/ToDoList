@@ -16,7 +16,7 @@ namespace ToDoList.Controllers
         public AccountController(IUserService userService)
         {
             _userService = userService;
-            
+
         }
 
         // GET: /Account/Register
@@ -29,14 +29,21 @@ namespace ToDoList.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(User user)
         {
-            // ❗ Otomatik yerine manuel validation
-
             try
             {
                 await _userService.AddAsync(user);
 
 
                 return RedirectToAction("Login");
+            }
+
+            catch (FluentValidation.ValidationException ex)
+            {
+                foreach (var error in ex.Errors)
+                {
+                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+                }
+                return View(user);
             }
             catch (Exception ex)
             {
@@ -90,4 +97,4 @@ namespace ToDoList.Controllers
         }
     }
 }
-//todo.cshtml de indexi kaldır yerine groutakileri koy bi öyle dene
+//todo.cshtml de indexi kaldır yerine grouptakileri koy bi öyle dene

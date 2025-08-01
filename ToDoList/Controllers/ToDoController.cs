@@ -1,5 +1,6 @@
 ﻿using Business.Interfaces;
 using Entities;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -11,11 +12,13 @@ namespace ToDoList.Controllers
     {
         private readonly IToDoService _toDoService;
         private readonly IToDoGroupService _toDoGroupService;
+        private readonly IValidator<ToDo> _toDoValidator;
 
-        public ToDoController(IToDoService toDoService, IToDoGroupService toDoGroupService)
+        public ToDoController(IToDoService toDoService, IToDoGroupService toDoGroupService, IValidator<ToDo> toDoValidator)
         {
             _toDoService = toDoService;
             _toDoGroupService = toDoGroupService;
+            _toDoValidator = toDoValidator;
         }
 
         public async Task<IActionResult> Index()
@@ -30,9 +33,6 @@ namespace ToDoList.Controllers
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
-            if (string.IsNullOrWhiteSpace(title))
-                return RedirectToAction("Detail", "ToDoGroup", new { id = groupId });
-
             var todo = new ToDo
             {
                 Title = title,
@@ -43,11 +43,22 @@ namespace ToDoList.Controllers
                 UserId = userId
             };
 
+            var validationResult = await _toDoValidator.ValidateAsync(todo);
+            if (!validationResult.IsValid)
+            {
+                foreach (var error in validationResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.ErrorMessage);
+                }
+
+                var group = await _toDoGroupService.GetByIdWithTasksAsync(groupId);
+                return View("~/Views/ToDoGroup/Detail.cshtml", group); // validasyonda tekrar aynı sayfaya dön
+            }
+
             await _toDoService.AddAsync(todo);
             return RedirectToAction("Detail", "ToDoGroup", new { id = groupId });
         }
 
-        // Alt görev silme
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
@@ -65,7 +76,6 @@ namespace ToDoList.Controllers
             return RedirectToAction("Detail", "ToDoGroup", new { id = groupId });
         }
 
-        // Checkbox ile tamamlandı/bekliyor işlemi
         [HttpPost]
         public async Task<IActionResult> ToggleComplete(int id)
         {
@@ -83,5 +93,36 @@ namespace ToDoList.Controllers
             await _toDoService.UpdateAsync(todo);
             return RedirectToAction("Detail", "ToDoGroup", new { id = todo.GroupId });
         }
+
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var todo = await _toDoService.GetByIdAsync(id);
+            if (todo == null) return NotFound();
+
+            return View(todo);
+        }
+
+        // POST: ToDo/Edit
+        [HttpPost]
+        public async Task<IActionResult> Edit(ToDo todo)
+        {
+            try
+            {
+                await _toDoService.UpdateAsync(todo);
+                return RedirectToAction("Detail", "ToDoGroup", new { id = todo.GroupId });
+            }
+            catch (FluentValidation.ValidationException ex)
+            {
+                foreach (var error in ex.Errors)
+                {
+                    ModelState.AddModelError("", error.ErrorMessage);
+                }
+
+                return View(todo);
+            }
+        }
+
     }
 }

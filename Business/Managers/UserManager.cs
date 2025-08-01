@@ -31,7 +31,7 @@ namespace Business.Managers
             if (!validationResult.IsValid)
             {
                 var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
-                throw new ValidationException("Kullanıcı doğrulama hataları: " + string.Join(", ", errors));
+                throw new ValidationException(validationResult.Errors);
             }
 
             //FLuentVlidation kullanarak kullanıcı doğrulama işlemleri yapılabilir

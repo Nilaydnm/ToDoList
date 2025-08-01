@@ -11,6 +11,7 @@ namespace DataAccess.Interfaces
     {
         Task DeleteAsync(ToDoGroup group);
         Task<ToDoGroup> GetByIdWithTasksAsync(int id);
+        Task<List<ToDoGroup>> GetByUserIdAsync(int userId);
         Task<List<ToDoGroup>> GetGroupsWithTasksAsync();
     }
 }

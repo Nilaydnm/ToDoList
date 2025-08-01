@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Business.Interfaces
 {
-    public interface IUserService
+    public interface IUserService : IGenericService<User>
     {
         Task<User> GetByUsernameAsync(string username);
         Task<User> GetByIdAsync(int id);

@@ -23,6 +23,10 @@ namespace DataAccess.Repositories
         {
             _context.ToDos.Remove(todo);
         }
+        public async Task<bool> GroupExistsAsync(int groupId)
+        {
+            return await _context.ToDoGroups.AnyAsync(g => g.Id == groupId);
+        }
 
         public EfToDoRepository(AppDbContext context) : base(context)
         {
