@@ -6,16 +6,18 @@ using DataAccess.Interfaces;
 using Entities;
 using System.Text;
 using System.Threading.Tasks;
+using FluentValidation;
 
 namespace Business.Managers
 {
     public class ToDoManager : IToDoService
     {
         private readonly IToDoRepository _toDoRepository;
-
-        public ToDoManager(IToDoRepository toDoRepository)
+        private readonly IValidator<ToDo> _validator;
+        public ToDoManager(IToDoRepository toDoRepository, IValidator<ToDo> validator)
         {
             _toDoRepository = toDoRepository;
+            _validator = validator;
         }
 
         public async Task<List<ToDo>> GetAllAsync()
@@ -30,12 +32,26 @@ namespace Business.Managers
 
         public async Task AddAsync(ToDo todo)
         {
+            var validationResult = await _validator.ValidateAsync(todo);
+            if (!validationResult.IsValid)
+            {
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                throw new ValidationException(validationResult.Errors);
+            }
+            
             await _toDoRepository.AddAsync(todo);
             await _toDoRepository.SaveChangesAsync();
         }
 
         public async Task UpdateAsync(ToDo todo)
         {
+            var validationResult = await _validator.ValidateAsync(todo);
+            if (!validationResult.IsValid)
+            {
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                throw new ValidationException(validationResult.Errors);
+            }
+            
             await _toDoRepository.UpdateAsync(todo);
             await _toDoRepository.SaveChangesAsync();
         }

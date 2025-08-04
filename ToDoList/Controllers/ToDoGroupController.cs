@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Business.Interfaces;
+﻿using Business.Interfaces;
 using Entities;
+using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace ToDoList.Controllers
 {
@@ -19,27 +20,44 @@ namespace ToDoList.Controllers
         {
             var group = await _groupService.GetByIdWithTasksAsync(id);
             if (group == null) return NotFound();
-
+            // kullanıcı kontrolü yapılsın !
             return View(group);
         }
+
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            // 1. Giriş yapan kullanıcının ID'sini alıyoruz (Claims üzerinden)
+
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value);
 
-            // 2. Sadece bu kullanıcıya ait grup ve görevleri çekiyoruz
             var groups = await _groupService.GetGroupsWithTasksByUserIdAsync(userId);
 
             return View(groups);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> DetailFromSession()
+        {
+            var groupId = HttpContext.Session.GetInt32("CurrentGroupId");
+
+            if (groupId == null)
+                return RedirectToAction("Index");
+
+            var group = await _groupService.GetByIdWithTasksAsync(groupId.Value);
+            if (group == null) return NotFound();
+
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
+           
+
+            return View("Detail", group);
+        }
         [HttpPost]
         public async Task<IActionResult> Add(string title)
         {
             try
             {
-                // 1. Giriş yapan kullanıcının ID'sini al
+                
                 var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
                 if (string.IsNullOrEmpty(userIdStr))
@@ -47,20 +65,18 @@ namespace ToDoList.Controllers
 
                 var userId = int.Parse(userIdStr);
 
-                // 2. Title kontrolü: boşsa ModelState hatası ekle
                 if (string.IsNullOrWhiteSpace(title))
                 {
                     ModelState.AddModelError("Title", "Başlık boş olamaz.");
                 }
 
-                // 3. Eğer model hatalıysa aynı sayfaya hata mesajlarıyla dön
+                
                 if (!ModelState.IsValid)
                 {
                     var groups = await _groupService.GetGroupsWithTasksByUserIdAsync(userId);
                     return View("Index", groups);
                 }
 
-                // 4. Grup nesnesini oluştur ve kaydet
                 var group = new ToDoGroup
                 {
                     Title = title,
@@ -72,7 +88,7 @@ namespace ToDoList.Controllers
             }
             catch (FluentValidation.ValidationException ex)
             {
-                // FluentValidation hatalarını ModelState’e ekle
+             
                 foreach (var error in ex.Errors)
                 {
                     ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
@@ -112,19 +128,28 @@ namespace ToDoList.Controllers
         {
             try
             {
-                await _groupService.UpdateAsync(group);
+                var existingGroup = await _groupService.GetByIdAsync(group.Id);
+                if (existingGroup == null)
+                    return NotFound();
+
+                
+                existingGroup.Title = group.Title;
+
+                await _groupService.UpdateAsync(existingGroup);
+
                 return RedirectToAction("Index");
             }
             catch (FluentValidation.ValidationException ex)
             {
                 foreach (var error in ex.Errors)
                 {
-                    ModelState.AddModelError("", error.ErrorMessage);
+                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
                 }
 
                 return View(group);
             }
         }
+
 
 
 

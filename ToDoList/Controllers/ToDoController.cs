@@ -48,11 +48,15 @@ namespace ToDoList.Controllers
             {
                 foreach (var error in validationResult.Errors)
                 {
-                    ModelState.AddModelError(string.Empty, error.ErrorMessage);
+                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+
                 }
 
+                ViewBag.PreviousTitle = title;
+                ViewBag.PreviousDeadline = deadline;
+
                 var group = await _toDoGroupService.GetByIdWithTasksAsync(groupId);
-                return View("~/Views/ToDoGroup/Detail.cshtml", group); // validasyonda tekrar aynı sayfaya dön
+                return View("~/Views/ToDoGroup/Detail.cshtml", group);
             }
 
             await _toDoService.AddAsync(todo);
@@ -94,7 +98,6 @@ namespace ToDoList.Controllers
             return RedirectToAction("Detail", "ToDoGroup", new { id = todo.GroupId });
         }
 
-
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -104,25 +107,41 @@ namespace ToDoList.Controllers
             return View(todo);
         }
 
-        // POST: ToDo/Edit
+
         [HttpPost]
         public async Task<IActionResult> Edit(ToDo todo)
         {
+            ToDo existingToDo = null;
+
             try
             {
-                await _toDoService.UpdateAsync(todo);
-                return RedirectToAction("Detail", "ToDoGroup", new { id = todo.GroupId });
+                existingToDo = await _toDoService.GetByIdAsync(todo.Id);
+                if (existingToDo == null) return NotFound();
+
+                existingToDo.Title = todo.Title;
+                existingToDo.Deadline = todo.Deadline;
+
+                await _toDoService.UpdateAsync(existingToDo); // burada validasyon çalışır
+
+                return RedirectToAction("Detail", "ToDoGroup", new { id = existingToDo.GroupId });
             }
             catch (FluentValidation.ValidationException ex)
             {
                 foreach (var error in ex.Errors)
                 {
-                    ModelState.AddModelError("", error.ErrorMessage);
+                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
                 }
 
-                return View(todo);
+                var groupId = todo.GroupId.HasValue
+                    ? todo.GroupId.Value
+                    : (existingToDo?.GroupId ?? 0);
+
+                var group = await _toDoGroupService.GetByIdWithTasksAsync(groupId);
+                return View("~/Views/ToDoGroup/Detail.cshtml", group);
             }
         }
+
+
 
     }
 }

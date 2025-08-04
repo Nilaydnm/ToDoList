@@ -28,7 +28,9 @@ namespace Business.ValidationRules
                 .LessThan(DateTime.Now.AddYears(50))
                 .WithMessage("Deadline çok uzak bir tarih olamaz");
 
+            Console.WriteLine("✅ ToDoValidator çalıştı");
         }
+
 
     }
 }
