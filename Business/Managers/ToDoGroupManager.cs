@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using Microsoft.AspNetCore.Identity;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -32,7 +33,7 @@ namespace Business.Managers
             if (!validationResult.IsValid)
             {
                 var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
-                throw new FluentValidation.ValidationException("ToDoGroup doğrulama hataları: " + string.Join(", ", errors));
+                throw new FluentValidation.ValidationException(validationResult.Errors); 
             }
 
             await _toDoGroupRepository.AddAsync(group);

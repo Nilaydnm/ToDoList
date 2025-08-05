@@ -1,5 +1,6 @@
 ﻿using Business.Interfaces;
 using Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
@@ -23,7 +24,7 @@ namespace ToDoList.Controllers
             // kullanıcı kontrolü yapılsın !
             return View(group);
         }
-
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> Index()
         {

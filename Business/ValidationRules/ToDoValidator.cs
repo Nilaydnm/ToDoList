@@ -22,13 +22,14 @@ namespace Business.ValidationRules
                 .MaximumLength(100).WithMessage("Başlık 100 karakteri geçmemeli")
                 .MinimumLength(3).WithMessage("Başlık en az 3 karakter olmalı");
             RuleFor(x => x.Deadline)
-                .GreaterThan(DateTime.Now).WithMessage("Son teslim tarihi gelecek bir tarih olmalı");
+                .GreaterThan(DateTime.Now).WithMessage("Son teslim tarihi gelecek bir tarih olmalı")
+                .When(x => !x.IsCompleted);
 
             RuleFor(x => x.Deadline)
                 .LessThan(DateTime.Now.AddYears(50))
                 .WithMessage("Deadline çok uzak bir tarih olamaz");
 
-            Console.WriteLine("✅ ToDoValidator çalıştı");
+           
         }
 
 

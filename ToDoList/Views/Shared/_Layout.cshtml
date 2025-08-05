@@ -35,6 +35,17 @@
                                 <a class="nav-link text-dark" asp-controller="Home" asp-action="Privacy">Gizlilik</a>
                             </li>
                         </ul>
+                        <ul class="navbar-nav ms-auto">
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <li class="nav-item">
+                                    <form method="post" asp-controller="Account" asp-action="Logout">
+                                        <button type="submit" class="btn btn-outline-danger">Çıkış Yap</button>
+                                    </form>
+                                </li>
+                            }
+                        </ul>
+
                     </div>
                 </div>
             </nav>

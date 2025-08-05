@@ -3,6 +3,14 @@
     ViewData["Title"] = "Yapılacaklar";
 }
 
+<style>
+    .deadline-expired {
+        color: #d00000;
+        text-decoration: line-through;
+        font-weight: bold;
+    }
+</style>
+
 <div class="container mt-4">
     <h2 class="mb-3">Yeni Yapılacaklar Ekle</h2>
 
@@ -15,6 +23,7 @@
         <div class="col-auto">
             <button type="submit" class="btn btn-primary">Ekle</button>
         </div>
+        <span class="text-danger">@Html.ValidationMessage("Title")</span>
     </form>
 
     @if (Model != null && Model.Any())
@@ -24,7 +33,6 @@
             <div class="card mb-3 shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
 
-                    <!-- GÜNCELLEME FORMU -->
                     <form method="post" asp-action="Edit" class="d-flex flex-grow-1">
                         <input type="hidden" name="id" value="@group.Id" />
                         <input type="text"
@@ -38,17 +46,14 @@
                     </form>
 
                     <div class="d-flex align-items-center">
-                        <!-- GÖREVLER DETAYA GİTME LİNKİ -->
                         <a asp-controller="ToDoGroup" asp-action="Detail" asp-route-id="@group.Id" class="btn btn-sm btn-outline-secondary me-2">
                             Görevler
                         </a>
 
-                        <!-- SİLME FORMU -->
                         <form asp-action="Delete" method="post" style="display:inline;" onsubmit="return confirm('Silmek istediğinize emin misiniz?')">
                             <input type="hidden" name="id" value="@group.Id" />
                             <button class="btn btn-sm btn-outline-danger">Sil</button>
                         </form>
-
                     </div>
                 </div>
 
@@ -59,7 +64,7 @@
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <span><i class="bi bi-check2-square text-success me-2"></i> @task.Title</span>
-                                <small class="text-muted">
+                                <small class="@(task.Deadline.HasValue && task.Deadline.Value < DateTime.Now ? "deadline-expired" : "text-muted")">
                                     @(task.Deadline.HasValue ? $"Deadline: {task.Deadline.Value:dd.MM.yyyy HH:mm}" : "-")
                                 </small>
                             </li>
@@ -81,7 +86,6 @@
     <form asp-action="Logout" asp-controller="Account" method="post" class="text-end mb-3">
         <button type="submit" class="btn btn-outline-danger btn-sm">Çıkış Yap</button>
     </form>
-
 </div>
 
 @section Scripts {
