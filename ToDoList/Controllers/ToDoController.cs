@@ -84,19 +84,17 @@ namespace ToDoList.Controllers
         public async Task<IActionResult> ToggleComplete(int id)
         {
             var todo = await _toDoService.GetByIdAsync(id);
-            if (todo == null)
-                return NotFound();
-
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            if (todo.UserId != userId)
-                return Unauthorized();
+            if (todo == null) return NotFound();
 
             todo.IsCompleted = !todo.IsCompleted;
             todo.CompletedAt = todo.IsCompleted ? DateTime.Now : null;
 
-            await _toDoService.UpdateAsync(todo);
+            
+            await _toDoService.UpdateWithoutValidationAsync(todo);
+
             return RedirectToAction("Detail", "ToDoGroup", new { id = todo.GroupId });
         }
+
 
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -121,7 +119,7 @@ namespace ToDoList.Controllers
                 existingToDo.Title = todo.Title;
                 existingToDo.Deadline = todo.Deadline;
 
-                await _toDoService.UpdateAsync(existingToDo); // burada validasyon çalışır
+                await _toDoService.UpdateAsync(existingToDo); 
 
                 return RedirectToAction("Detail", "ToDoGroup", new { id = existingToDo.GroupId });
             }

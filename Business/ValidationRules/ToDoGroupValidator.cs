@@ -20,8 +20,10 @@ namespace Business.ValidationRules
             _toDoGroupRepository = toDoGroupRepository;
             RuleFor(x => x.Title)
                 .MaximumLength(100).WithMessage("Başlık 100 karakteri geçmemeli")
-                .MinimumLength(3).WithMessage("Başlık en az 3 karakter olmalı");
-
+                .MinimumLength(2).WithMessage("Başlık en az 2 karakter olmalı");
+            RuleFor(x => x.Title)
+                .NotEmpty().WithMessage("Başlık boş bırakılamaz");
+               
         }
     }
 }

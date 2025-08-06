@@ -10,6 +10,8 @@ namespace Entities
     {
         public int Id { get; set; }
         // ortak özellikleri topladığımız sınıf
-       
+
+        public bool IsDeleted { get; set; } = false;
+
     }
 }

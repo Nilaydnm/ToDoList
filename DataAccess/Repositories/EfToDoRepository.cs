@@ -17,6 +17,12 @@ namespace DataAccess.Repositories
         public async Task UpdateAsync(ToDo todo)
         {
             _context.ToDos.Update(todo);
+            await _context.SaveChangesAsync();
+        }
+        public async Task UpdateWithoutValidationAsync(ToDo todo)
+        {
+            _context.ToDos.Update(todo);
+            await _context.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(ToDo todo)

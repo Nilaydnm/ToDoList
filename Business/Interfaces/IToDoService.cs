@@ -15,5 +15,6 @@ namespace Business.Interfaces
         Task UpdateAsync(ToDo todo);
         Task DeleteAsync(ToDo todo);
         Task<List<ToDo>> GetByUserIdAsync(int userId);
+        Task UpdateWithoutValidationAsync(ToDo todo);
     }
 }

@@ -55,6 +55,12 @@ namespace Business.Managers
             await _toDoRepository.UpdateAsync(todo);
             await _toDoRepository.SaveChangesAsync();
         }
+
+        public async Task UpdateWithoutValidationAsync(ToDo todo)
+        {
+            await _toDoRepository.UpdateAsync(todo);
+        }
+
         public async Task<List<ToDo>> GetByUserIdAsync(int userId)
         {
             return await _toDoRepository.GetByUserIdAsync(userId);

@@ -1,5 +1,6 @@
 ﻿using Business.Interfaces;
 using Entities;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -10,10 +11,11 @@ namespace ToDoList.Controllers
     public class ToDoGroupController : Controller
     {
         private readonly IToDoGroupService _groupService;
-
-        public ToDoGroupController(IToDoGroupService groupService)
+        private readonly IValidator<ToDoGroup> _groupValidator;
+        public ToDoGroupController(IToDoGroupService groupService, IValidator<ToDoGroup> groupValidator)
         {
             _groupService = groupService;
+            _groupValidator = groupValidator;
         }
 
         [HttpGet]
@@ -24,6 +26,7 @@ namespace ToDoList.Controllers
             // kullanıcı kontrolü yapılsın !
             return View(group);
         }
+
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -123,17 +126,27 @@ namespace ToDoList.Controllers
             return View(group);
         }
 
-        // POST: ToDoGroup/Edit
         [HttpPost]
         public async Task<IActionResult> Edit(ToDoGroup group)
         {
             try
             {
-                var existingGroup = await _groupService.GetByIdAsync(group.Id);
-                if (existingGroup == null)
-                    return NotFound();
+                var validationResult = await _groupValidator.ValidateAsync(group);
+                if (!validationResult.IsValid)
+                {
+                    foreach (var error in validationResult.Errors)
+                    {
+                        ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+                    }
 
-                
+                    var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                    var groups = await _groupService.GetGroupsWithTasksByUserIdAsync(userId);
+                    return View("Index", groups);
+                }
+
+                var existingGroup = await _groupService.GetByIdAsync(group.Id);
+                if (existingGroup == null) return NotFound();
+
                 existingGroup.Title = group.Title;
 
                 await _groupService.UpdateAsync(existingGroup);
@@ -147,9 +160,13 @@ namespace ToDoList.Controllers
                     ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
                 }
 
-                return View(group);
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                var groups = await _groupService.GetGroupsWithTasksByUserIdAsync(userId);
+                return View("Index", groups);
             }
         }
+
+
 
 
 

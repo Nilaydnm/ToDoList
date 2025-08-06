@@ -20,14 +20,14 @@ namespace DataAccess.Repositories
             _context = context;
         }
 
-        public Task<List<User>> GetByUserIdAsync(int userId)
+        public Task<List<User>> GetByUserIdAsync(int userId, bool isDeleted = false)
         {
             return _context.Users
                 .Where(u => u.Id == userId)
                 .ToListAsync();
         }
 
-        public async Task<User> GetByUsernameAsync(string username)
+        public async Task<User> GetByUsernameAsync(string username, bool isDeleted = false)
         {
             // firstor default ilk eşleşmeyi kabul ediyor aynı isimde biri kayıt olmasın bunu business katmanında kontrol et!
             return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);

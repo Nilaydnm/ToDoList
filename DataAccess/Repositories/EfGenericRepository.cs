@@ -23,17 +23,23 @@ namespace DataAccess.Repositories
             _table = _context.Set<T>();
         }
 
-        public async Task<T> GetByIdAsync(int id)
+        public async Task<T> GetByIdAsync(int id,bool isDeleted = false)
         {
-            return await _table.FindAsync(id);
+
+           IQueryable<T> query = _table.Where(c => c.Id == id);
+
+            //if (!isDeleted)
+            //    query.Where(c => !c.IsDeleted);
+
+            return query.FirstOrDefault();
         }
 
-        public async Task<List<T>> GetAllAsync()
+        public async Task<List<T>> GetAllAsync(bool isDeleted = false)
         {
             return await _table.ToListAsync();
         }
 
-        public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>> filter)
+        public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>> filter, bool isDeleted = false)
         {
             return await _table.Where(filter).ToListAsync();
         }
@@ -50,7 +56,8 @@ namespace DataAccess.Repositories
 
         public void Remove(T entity)
         {
-            _table.Remove(entity);
+            entity.IsDeleted = true; // Soft delete
+            _table.Update(entity);
         }
 
         public async Task SaveChangesAsync()

@@ -39,6 +39,7 @@ namespace ToDoList.Controllers
 
             catch (FluentValidation.ValidationException ex)
             {
+                ModelState.Clear();
                 foreach (var error in ex.Errors)
                 {
                     ModelState.AddModelError(error.PropertyName, error.ErrorMessage);

@@ -9,6 +9,7 @@ using Entities;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
@@ -24,20 +25,17 @@ builder.Services.AddScoped<IToDoService, ToDoManager>();
 builder.Services.AddValidatorsFromAssemblyContaining<ToDoGroupValidator>();
 builder.Services.AddScoped<IValidator<ToDo>, ToDoValidator>();
 builder.Services.AddScoped<IToDoRepository, EfToDoRepository>();
+builder.Services.AddScoped<IValidator<ToDoGroup>, ToDoGroupValidator>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(EfGenericRepository<>));
-
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 
 
 
 builder.Services.AddControllersWithViews();
-    //.AddFluentValidation(fv =>
-    //{
-    //    fv.RegisterValidatorsFromAssemblyContaining<UserValidator>();
-    //    fv.DisableDataAnnotationsValidation = true;
-    //    fv.ImplicitlyValidateChildProperties = true;
-    //    fv.ImplicitlyValidateRootCollectionElements = true;
-    //    fv.AutomaticValidationEnabled = true; 
-    //});
+    
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
