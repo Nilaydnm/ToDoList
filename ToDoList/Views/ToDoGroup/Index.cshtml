@@ -17,6 +17,7 @@
     @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
 
     <form method="post" asp-action="Add" class="row g-2 align-items-center mb-4">
+        @Html.AntiForgeryToken()
         <div class="col-auto">
             <input type="text" name="title" class="form-control" placeholder="Proje başlığı girin..." />
         </div>
@@ -26,14 +27,18 @@
         <span class="text-danger">@Html.ValidationMessage("Title")</span>
     </form>
 
-    @if (Model != null && Model.Any())
+    @if (Model != null && Model.Any(x => !x.IsDeleted))
     {
-        foreach (var group in Model)
+        <h4>Projeler</h4>
+
+        @foreach (var group in Model.Where(x => !x.IsDeleted))
         {
             <div class="card mb-3 shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
 
+                    
                     <form method="post" asp-action="Edit" class="d-flex flex-grow-1">
+                        @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@group.Id" />
                         <input type="text"
                                name="title"
@@ -50,8 +55,12 @@
                             Görevler
                         </a>
 
-                        <form asp-action="Delete" method="post" style="display:inline;" onsubmit="return confirm('Silmek istediğinize emin misiniz?')">
+                       
+                        <form asp-controller="ToDoGroup" asp-action="Delete" method="post"
+                              onsubmit="return confirm('Projeyi silmek istiyor musunuz?')">
+                            @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@group.Id" />
+                            <input type="hidden" name="mode" value="Soft" />
                             <button class="btn btn-sm btn-outline-danger">Sil</button>
                         </form>
                     </div>
@@ -63,7 +72,7 @@
                         @foreach (var task in group.ToDos)
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><i class="bi bi-check2-square text-success me-2"></i> @task.Title</span>
+                                <span>@task.Title</span>
                                 <small class="@(task.Deadline.HasValue && task.Deadline.Value < DateTime.Now ? "deadline-expired" : "text-muted")">
                                     @(task.Deadline.HasValue ? $"Deadline: {task.Deadline.Value:dd.MM.yyyy HH:mm}" : "-")
                                 </small>
@@ -83,6 +92,49 @@
         <div class="alert alert-info">Henüz herhangi yapılacaklar başlığı eklenmemiş.</div>
     }
 
-    
-</div>
+    @if (Model != null && Model.Any(x => x.IsDeleted))
+    {
+        <h4 class="mt-5">Silinen Projeler</h4>
 
+        @foreach (var group in Model.Where(x => x.IsDeleted))
+        {
+            <div class="card mb-3 shadow-sm bg-light opacity-75">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong class="text-muted text-decoration-line-through">@group.Title</strong>
+
+                    <div class="d-flex align-items-center gap-2">
+
+                       
+                        <form asp-controller="ToDoGroup" asp-action="Delete" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@group.Id" />
+                            <input type="hidden" name="mode" value="UndoSoft" />
+                            <button class="btn btn-sm btn-warning">Geri Al</button>
+                        </form>
+
+                     
+                        <form asp-controller="ToDoGroup" asp-action="Delete" method="post"
+                              onsubmit="return confirm('Kalıcı silinecek. Bu işlem geri alınamaz. Emin misiniz?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@group.Id" />
+                            <input type="hidden" name="mode" value="Hard" />
+                            <button class="btn btn-sm btn-outline-danger">Kalıcı Sil</button>
+                        </form>
+                    </div>
+                </div>
+
+                @if (group.ToDos != null && group.ToDos.Any())
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var task in group.ToDos)
+                        {
+                            <li class="list-group-item text-muted">
+                                <del>@task.Title</del>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+    }
+</div>

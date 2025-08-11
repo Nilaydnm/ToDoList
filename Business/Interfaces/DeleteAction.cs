@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Entities;
 using System.Threading.Tasks;
 
 namespace Business.Interfaces
 {
-    public interface IUserService : IGenericService<User>
-    {
-        Task<User> GetByUsernameAsync(string username);
+    public enum DeleteAction
+    { 
+        Soft,
+        Hard,
+        UndoSoft
     }
 }

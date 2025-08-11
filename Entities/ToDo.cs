@@ -18,6 +18,8 @@ namespace Entities
         public int? GroupId { get; set; }
         public ToDoGroup Group { get; set; }
         public DateTime? Deadline { get; set; }
+        public bool IsDeleted { get; set; } = false;
+
 
     }
 }

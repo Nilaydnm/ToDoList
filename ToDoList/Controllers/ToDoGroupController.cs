@@ -106,13 +106,10 @@ namespace ToDoList.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> Delete(int id)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id, DeleteAction mode = DeleteAction.Soft)
         {
-            var group = await _groupService.GetByIdWithTasksAsync(id);
-            if (group == null)
-                return NotFound();
-
-            await _groupService.DeleteAsync(group);
+            await _groupService.DeleteAsync(id, mode);
             return RedirectToAction("Index");
         }
 
@@ -168,6 +165,7 @@ namespace ToDoList.Controllers
 
 
 
+        
 
 
 

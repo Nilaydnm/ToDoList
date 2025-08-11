@@ -31,27 +31,25 @@ namespace ToDoList.Controllers
         [HttpPost]
         public async Task<IActionResult> Add(string title, DateTime? deadline, int groupId)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+            var userId = int.Parse(userIdStr);
 
             var todo = new ToDo
             {
                 Title = title,
                 GroupId = groupId,
-                Deadline = deadline,
-                CreatedAt = DateTime.Now,
-                IsCompleted = false,
-                UserId = userId
+                Deadline = deadline
             };
 
-            var validationResult = await _toDoValidator.ValidateAsync(todo);
-            if (!validationResult.IsValid)
+            var result = await _toDoService.CreateAsync(todo, userId);
+            if (!result.Succeeded)
             {
-                foreach (var error in validationResult.Errors)
-                {
-                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+                
+                foreach (var e in result.Errors)
+                    ModelState.AddModelError("", e);
 
-                }
-
+                
                 ViewBag.PreviousTitle = title;
                 ViewBag.PreviousDeadline = deadline;
 
@@ -59,25 +57,22 @@ namespace ToDoList.Controllers
                 return View("~/Views/ToDoGroup/Detail.cshtml", group);
             }
 
-            await _toDoService.AddAsync(todo);
             return RedirectToAction("Detail", "ToDoGroup", new { id = groupId });
         }
 
         [HttpPost]
-        public async Task<IActionResult> Delete(int id)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id, DeleteAction mode = DeleteAction.Soft)
         {
-            var todo = await _toDoService.GetByIdAsync(id);
-            if (todo == null)
-                return NotFound();
+            // Hard delete sonrası kayıt uçabileceği için, redirect edebilmek adına GID’yi ÖNCE al
+            var gid = await _toDoService.GetGroupIdByToDoIdAsync(id, isDeleted: true);
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            if (todo.UserId != userId)
-                return Unauthorized();
+            await _toDoService.DeleteAsync(id, mode);
 
-            int groupId = todo.GroupId ?? 0;
+            if (gid is null || gid == 0)
+                return RedirectToAction("Index", "ToDoGroup");
 
-            await _toDoService.DeleteAsync(todo);
-            return RedirectToAction("Detail", "ToDoGroup", new { id = groupId });
+            return RedirectToAction("Detail", "ToDoGroup", new { id = gid });
         }
 
         [HttpPost]
@@ -89,7 +84,7 @@ namespace ToDoList.Controllers
             todo.IsCompleted = !todo.IsCompleted;
             todo.CompletedAt = todo.IsCompleted ? DateTime.Now : null;
 
-            
+            // TODO normal update metodu ile yapılacak ve buradaki business kodları kaldırılacak
             await _toDoService.UpdateWithoutValidationAsync(todo);
 
             return RedirectToAction("Detail", "ToDoGroup", new { id = todo.GroupId });
@@ -139,6 +134,9 @@ namespace ToDoList.Controllers
             }
         }
 
+       
+
+       
 
 
     }

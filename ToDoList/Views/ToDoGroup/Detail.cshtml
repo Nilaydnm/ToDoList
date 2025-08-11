@@ -15,11 +15,12 @@
 <div class="container mt-4">
     <h2 class="mb-3">@Model.Title</h2>
 
-    <a asp-controller="ToDoGroup" asp-action="Index" class="btn btn-secondary mb-4">← Proje Listesine Dön</a>
+    <a asp-controller="ToDoGroup" asp-action="Index" class="btn btn-secondary mb-4">&larr; Proje Listesine Dön</a>
 
     @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
 
     <form asp-controller="ToDo" asp-action="Add" method="post" class="mb-4">
+        @Html.AntiForgeryToken()
         <input type="hidden" name="groupId" value="@Model.Id" />
 
         <div class="d-flex flex-wrap align-items-end gap-3">
@@ -60,12 +61,13 @@
             <tbody>
                 @foreach (var item in Model.ToDos)
                 {
-                    <tr class="@(item.IsCompleted ? "table-success" : "")">
+                    <tr class="@(item.IsCompleted ? "table-success" : "") @(item.IsDeleted ? "opacity-50" : "")">
                         <td>
                             <form asp-controller="ToDo" asp-action="Edit" method="post" class="d-flex">
+                                @Html.AntiForgeryToken()
                                 <input type="hidden" name="Id" value="@item.Id" />
                                 <input type="hidden" name="GroupId" value="@item.GroupId" />
-                                <input type="text" name="Title" value="@item.Title" class="form-control me-2" />
+                                <input type="text" name="Title" value="@item.Title" class="form-control me-2 @(item.IsDeleted ? "text-decoration-line-through" : "")" />
                                 <input type="datetime-local" name="Deadline" value="@item.Deadline?.ToString("yyyy-MM-ddTHH:mm")" class="form-control me-2" />
                                 <button type="submit" class="btn btn-sm btn-warning">Güncelle</button>
                             </form>
@@ -73,6 +75,7 @@
 
                         <td>
                             <form asp-controller="ToDo" asp-action="ToggleComplete" method="post">
+                                @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <input type="checkbox" onchange="this.form.submit()" @(item.IsCompleted ? "checked" : "") />
                                 <span class="ms-1">
@@ -88,10 +91,37 @@
                         <td>@(item.CompletedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
 
                         <td>
-                            <form asp-controller="ToDo" asp-action="Delete" method="post" onsubmit="return confirm('Silmek istediğinize emin misiniz?')">
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <button type="submit" class="btn btn-sm btn-danger">Sil</button>
-                            </form>
+                            @if (!item.IsDeleted)
+                            {
+                               
+                                <form asp-controller="ToDo" asp-action="Delete" method="post" class="d-inline"
+                                      onsubmit="return confirm('Silmek istediğinize emin misiniz?')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="mode" value="Soft" />
+                                    <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <div class="d-flex gap-2">
+                                    
+                                    <form asp-controller="ToDo" asp-action="Delete" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="mode" value="UndoSoft" />
+                                        <button type="submit" class="btn btn-sm btn-warning">Geri Al</button>
+                                    </form>
+
+                                    <form asp-controller="ToDo" asp-action="Delete" method="post" class="d-inline"
+                                          onsubmit="return confirm('Kalıcı silinecek. Bu işlem geri alınamaz. Emin misiniz?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="mode" value="Hard" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Kalıcı Sil</button>
+                                    </form>
+                                </div>
+                            }
                         </td>
                     </tr>
                 }

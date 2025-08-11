@@ -1,20 +1,21 @@
-﻿using Entities;
+﻿using Business.Results;
+using Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Business.Interfaces
 {
+   
     public interface IGenericService<T>
     {
-        Task<User> GetByUsernameAsync(string username);
-        Task<List<T>> GetAllAsync();
-        Task<T> GetByIdAsync(int id);
+        Task<List<T>> GetAllAsync(Expression<Func<T, bool>> filter = null, bool isDeleted = false);
+        Task<T> GetByIdAsync(int id, bool isDeleted = false);
         Task AddAsync(T entity);
         Task UpdateAsync(T entity);
-        Task DeleteAsync(T entity);
-        Task<List<T>> GetByUserIdAsync(int userId); 
+        Task DeleteAsync(int id, DeleteAction action = DeleteAction.Soft);
     }
 }

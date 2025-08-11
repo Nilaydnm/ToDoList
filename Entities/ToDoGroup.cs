@@ -15,5 +15,7 @@ namespace Entities
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? Deadline { get; set; }
         public List<ToDo> ToDos { get; set; }
+        public bool IsDeleted { get; set; } = false;
+
     }
 }

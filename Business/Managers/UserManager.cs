@@ -1,4 +1,5 @@
 ﻿using Business.Interfaces;
+using Business.Results;
 using DataAccess.Interfaces;
 using Entities;
 using FluentValidation;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -80,6 +82,27 @@ namespace Business.Managers
             }
         }
 
+        public Task<List<User>> GetAllAsync(Expression<Func<User, bool>> filter = null, bool isDeleted = false)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<User> GetByIdAsync(int id, bool isDeleted = false)
+        {
+            throw new NotImplementedException();
+        }
+
+        
+
+        public Task<OperationResult> DeleteAsync(int id, DeleteAction action = DeleteAction.Soft)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task IGenericService<User>.DeleteAsync(int id, DeleteAction action)
+        {
+            return DeleteAsync(id, action);
+        }
     }
 }
 

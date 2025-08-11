@@ -27,6 +27,9 @@ builder.Services.AddScoped<IValidator<ToDo>, ToDoValidator>();
 builder.Services.AddScoped<IToDoRepository, EfToDoRepository>();
 builder.Services.AddScoped<IValidator<ToDoGroup>, ToDoGroupValidator>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(EfGenericRepository<>));
+
+
+
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.SuppressModelStateInvalidFilter = true;

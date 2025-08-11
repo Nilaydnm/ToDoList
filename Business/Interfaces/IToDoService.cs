@@ -1,20 +1,18 @@
-﻿using System;
+﻿using Business.Results;
+using Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Entities;
 using System.Threading.Tasks;
 
 namespace Business.Interfaces
 {
     public interface IToDoService : IGenericService<ToDo>
     {
-        Task<List<ToDo>> GetAllAsync();
-        Task<ToDo> GetByIdAsync(int id);
-        Task AddAsync(ToDo todo);
-        Task UpdateAsync(ToDo todo);
-        Task DeleteAsync(ToDo todo);
-        Task<List<ToDo>> GetByUserIdAsync(int userId);
+        Task<List<ToDo>> GetByUserIdAsync(int userId, bool isDeleted = false);
+        Task<int?> GetGroupIdByToDoIdAsync(int todoId, bool isDeleted = false);
         Task UpdateWithoutValidationAsync(ToDo todo);
+        Task<OperationResult> CreateAsync(ToDo todo, int userId);
     }
 }

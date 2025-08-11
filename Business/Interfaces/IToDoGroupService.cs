@@ -10,11 +10,10 @@ namespace Business.Interfaces
     public interface IToDoGroupService : IGenericService<ToDoGroup>
     {
         Task<List<ToDoGroup>> GetGroupsWithTasksAsync();
-        Task AddAsync(ToDoGroup group);
         Task<ToDoGroup> GetByIdWithTasksAsync(int id);
 
-        Task DeleteAsync(ToDoGroup group);
         Task<List<ToDoGroup>> GetGroupsWithTasksByUserIdAsync(int userId);
+
 
     }
 }
