@@ -19,13 +19,11 @@ namespace ToDoList.Controllers
 
         }
 
-        // GET: /Account/Register
         public IActionResult Register()
         {
             return View();
         }
 
-        // POST: /Account/Register
         [HttpPost]
         public async Task<IActionResult> Register(User user)
         {
@@ -53,13 +51,11 @@ namespace ToDoList.Controllers
             }
         }
 
-        // GET: /Account/Login
         public IActionResult Login()
         {
             return View();
         }
 
-        // POST: /Account/Login
         [HttpPost]
         public async Task<IActionResult> Login(string username, string password)
         {

@@ -11,13 +11,9 @@ namespace Business.ValidationRules
 {
     public class ToDoGroupValidator : AbstractValidator<ToDoGroup>
     {
-        private readonly IToDoGroupRepository _toDoGroupRepository;
-
-        
-
-        public ToDoGroupValidator(IToDoGroupRepository toDoGroupRepository)
+        public ToDoGroupValidator()
         {
-            _toDoGroupRepository = toDoGroupRepository;
+            
             RuleFor(x => x.Title)
                 .MaximumLength(100).WithMessage("Başlık 100 karakteri geçmemeli")
                 .MinimumLength(2).WithMessage("Başlık en az 2 karakter olmalı");

@@ -13,23 +13,24 @@ namespace Business.ValidationRules
    
     public class ToDoValidator : AbstractValidator<ToDo>
     {
-        private readonly IToDoRepository _toDoRepository;
-        public ToDoValidator(IToDoRepository toDoRepository)
+       
+        public ToDoValidator()
         {
-            _toDoRepository = toDoRepository;
+         
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Yapılacaklar boş bırakılamaz")
                 .MaximumLength(100).WithMessage("Başlık 100 karakteri geçmemeli")
                 .MinimumLength(3).WithMessage("Başlık en az 3 karakter olmalı");
             RuleFor(x => x.Deadline)
                 .GreaterThan(DateTime.Now).WithMessage("Son teslim tarihi gelecek bir tarih olmalı")
-                .When(x => !x.IsCompleted);
+               .When(x => x.Deadline.HasValue && !x.IsCompleted);
 
             RuleFor(x => x.Deadline)
                 .LessThan(DateTime.Now.AddYears(50))
-                .WithMessage("Deadline çok uzak bir tarih olamaz");
+                .WithMessage("Deadline çok uzak bir tarih olamaz")
+                .When(x => x.Deadline.HasValue);
 
-           
+
         }
 
 

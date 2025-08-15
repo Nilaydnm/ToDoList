@@ -2,6 +2,32 @@
 
 @{
     ViewData["Title"] = $"{Model.Title} - Yapılacaklar";
+
+    var status = (Context.Request.Query["status"].FirstOrDefault() ?? "all").ToLowerInvariant();
+    var qText = (Context.Request.Query["q"].FirstOrDefault() ?? "").Trim();
+
+    DateTime? from = null, to = null;
+    if (DateTime.TryParse(Context.Request.Query["from"].FirstOrDefault(), out var fromTmp)) from = fromTmp.Date;
+    if (DateTime.TryParse(Context.Request.Query["to"].FirstOrDefault(), out var toTmp)) to = toTmp.Date;
+
+    var fromVal = from.HasValue ? from.Value.ToString("yyyy-MM-dd") : "";
+    var toVal = to.HasValue ? to.Value.ToString("yyyy-MM-dd") : "";
+
+    bool Contains(string s) => string.IsNullOrWhiteSpace(qText) || (s ?? "").ToLower().Contains(qText.ToLower());
+
+    var tasks = (Model.ToDos ?? new List<Entities.ToDo>()).Where(t => !t.IsDeleted);
+
+    if (status == "active") tasks = tasks.Where(t => !t.IsCompleted);
+    else if (status == "done") tasks = tasks.Where(t => t.IsCompleted);
+
+    if (!string.IsNullOrWhiteSpace(qText)) tasks = tasks.Where(t => Contains(t.Title));
+
+    if (from.HasValue) tasks = tasks.Where(t =>
+        (t.Deadline.HasValue && t.Deadline.Value.Date >= from.Value) || (t.CreatedAt.Date >= from.Value));
+    if (to.HasValue) tasks = tasks.Where(t =>
+        (t.Deadline.HasValue && t.Deadline.Value.Date <= to.Value) || (t.CreatedAt.Date <= to.Value));
+
+    tasks = tasks.OrderBy(x => x.IsCompleted).ThenBy(x => x.Deadline ?? DateTime.MaxValue);
 }
 
 <style>
@@ -15,29 +41,78 @@
 <div class="container mt-4">
     <h2 class="mb-3">@Model.Title</h2>
 
-    <a asp-controller="ToDoGroup" asp-action="Index" class="btn btn-secondary mb-4">&larr; Proje Listesine Dön</a>
+    <a asp-controller="ToDoGroup" asp-action="Index"
+       asp-route-status="@status" asp-route-q="@qText"
+       asp-route-from="@fromVal" asp-route-to="@toVal"
+       class="btn btn-secondary mb-4">&larr; Proje Listesine Dön</a>
 
     @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
 
+    <!-- Filtre barı -->
+    <form method="get" class="row g-2 align-items-end mb-4">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Durum</label>
+            <select name="status" class="form-select" onchange="this.form.submit()">
+                @if (status == "all")
+                {
+                    <option value="all" selected>Tümü</option>
+                }
+                else
+                {
+                    <option value="all">Tümü</option>
+                }
+                @if (status == "active")
+                {
+                    <option value="active" selected>Aktif</option>
+                }
+                else
+                {
+                    <option value="active">Aktif</option>
+                }
+                @if (status == "done")
+                {
+                    <option value="done" selected>Tamamlanmış</option>
+                }
+                else
+                {
+                    <option value="done">Tamamlanmış</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Arama</label>
+            <input type="text" name="q" value="@qText" class="form-control" placeholder="Görev başlığı...">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Başlangıç</label>
+            <input type="date" name="from" class="form-control" value="@fromVal">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Bitiş</label>
+            <input type="date" name="to" class="form-control" value="@toVal">
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-secondary w-100" type="submit">Uygula</button>
+        </div>
+    </form>
+
+    <!-- Yeni görev ekleme -->
     <form asp-controller="ToDo" asp-action="Add" method="post" class="mb-4">
         @Html.AntiForgeryToken()
         <input type="hidden" name="groupId" value="@Model.Id" />
-
         <div class="d-flex flex-wrap align-items-end gap-3">
             <div class="d-flex flex-column" style="min-width: 250px;">
-                <label for="titleInput" class="form-label fw-bold">Başlık</label>
-                <input type="text" id="titleInput" name="title" class="form-control"
-                       value="@ViewBag.PreviousTitle" placeholder="Görev başlığı..." />
+                <label class="form-label fw-bold">Başlık</label>
+                <input type="text" name="title" class="form-control" value="@ViewBag.PreviousTitle" placeholder="Görev başlığı..." />
                 <span class="text-danger">@Html.ValidationMessage("Title")</span>
             </div>
-
             <div class="d-flex flex-column" style="min-width: 250px;">
-                <label for="deadlineInput" class="form-label fw-bold">Deadline</label>
-                <input type="datetime-local" id="deadlineInput" name="deadline" class="form-control"
+                <label class="form-label fw-bold">Deadline</label>
+                <input type="datetime-local" name="deadline" class="form-control"
                        value="@(ViewBag.PreviousDeadline != null ? ((DateTime)ViewBag.PreviousDeadline).ToString("yyyy-MM-ddTHH:mm") : "")" />
                 <span class="text-danger">@Html.ValidationMessage("Deadline")</span>
             </div>
-
             <div class="d-flex flex-column" style="min-width: 100px;">
                 <label class="invisible">Ekle</label>
                 <button type="submit" class="btn btn-primary w-100">Ekle</button>
@@ -45,9 +120,9 @@
         </div>
     </form>
 
-    @if (Model.ToDos != null && Model.ToDos.Any())
+    @if (tasks.Any())
     {
-        <table class="table table-bordered table-striped">
+        <table class="table table-bordered table-striped align-middle">
             <thead class="table-light">
                 <tr>
                     <th>Yapılacaklar</th>
@@ -59,69 +134,41 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model.ToDos)
+                @foreach (var item in tasks)
                 {
-                    <tr class="@(item.IsCompleted ? "table-success" : "") @(item.IsDeleted ? "opacity-50" : "")">
+                    <tr class="@(item.IsCompleted ? "table-success" : "")">
                         <td>
                             <form asp-controller="ToDo" asp-action="Edit" method="post" class="d-flex">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="Id" value="@item.Id" />
                                 <input type="hidden" name="GroupId" value="@item.GroupId" />
-                                <input type="text" name="Title" value="@item.Title" class="form-control me-2 @(item.IsDeleted ? "text-decoration-line-through" : "")" />
+                                <input type="text" name="Title" value="@item.Title" class="form-control me-2" />
                                 <input type="datetime-local" name="Deadline" value="@item.Deadline?.ToString("yyyy-MM-ddTHH:mm")" class="form-control me-2" />
                                 <button type="submit" class="btn btn-sm btn-warning">Güncelle</button>
                             </form>
                         </td>
-
                         <td>
                             <form asp-controller="ToDo" asp-action="ToggleComplete" method="post">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <input type="checkbox" onchange="this.form.submit()" @(item.IsCompleted ? "checked" : "") />
-                                <span class="ms-1">
-                                    @(item.IsCompleted ? "✔ Tamamlandı" : "⏳ Bekliyor")
-                                </span>
+                                <span class="ms-1">@(item.IsCompleted ? "✔ Tamamlandı" : "⏳ Bekliyor")</span>
                             </form>
                         </td>
-
                         <td>@item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
-                        <td class="@(item.Deadline.HasValue && item.Deadline < DateTime.Now ? "deadline-expired" : "")">
+                        <td class="@(item.Deadline.HasValue && item.Deadline < DateTime.Now && !item.IsCompleted ? "deadline-expired" : "")">
                             @(item.Deadline?.ToString("dd.MM.yyyy HH:mm") ?? "-")
                         </td>
                         <td>@(item.CompletedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
-
                         <td>
-                            @if (!item.IsDeleted)
-                            {
-                               
-                                <form asp-controller="ToDo" asp-action="Delete" method="post" class="d-inline"
-                                      onsubmit="return confirm('Silmek istediğinize emin misiniz?')">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@item.Id" />
-                                    <input type="hidden" name="mode" value="Soft" />
-                                    <button type="submit" class="btn btn-sm btn-danger">Sil</button>
-                                </form>
-                            }
-                            else
-                            {
-                                <div class="d-flex gap-2">
-                                    
-                                    <form asp-controller="ToDo" asp-action="Delete" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <input type="hidden" name="mode" value="UndoSoft" />
-                                        <button type="submit" class="btn btn-sm btn-warning">Geri Al</button>
-                                    </form>
-
-                                    <form asp-controller="ToDo" asp-action="Delete" method="post" class="d-inline"
-                                          onsubmit="return confirm('Kalıcı silinecek. Bu işlem geri alınamaz. Emin misiniz?');">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <input type="hidden" name="mode" value="Hard" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Kalıcı Sil</button>
-                                    </form>
-                                </div>
-                            }
+                            <!-- Kalıcı sil yok; sadece soft-delete -->
+                            <form asp-controller="ToDo" asp-action="Delete" method="post" class="d-inline"
+                                  onsubmit="return confirm('Silmek istediğinize emin misiniz?')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="mode" value="Soft" />
+                                <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+                            </form>
                         </td>
                     </tr>
                 }
@@ -130,6 +177,6 @@
     }
     else
     {
-        <div class="alert alert-info">Henüz yapılacaklar eklenmemiş.</div>
+        <div class="alert alert-info">Gösterilecek görev yok.</div>
     }
 </div>

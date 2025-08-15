@@ -17,5 +17,6 @@ namespace Business.Interfaces
         Task AddAsync(T entity);
         Task UpdateAsync(T entity);
         Task DeleteAsync(int id, DeleteAction action = DeleteAction.Soft);
+
     }
 }

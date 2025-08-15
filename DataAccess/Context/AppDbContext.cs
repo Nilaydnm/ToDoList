@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Entities;
 using System.Threading.Tasks;
+using System.Linq.Expressions;
 
 namespace DataAccess.Context
 {
@@ -52,6 +53,10 @@ namespace DataAccess.Context
             modelBuilder.Entity<ToDo>()
                 .Property(t => t.Title)
                 .IsRequired();
+
+
+
+
         }
     }
 }

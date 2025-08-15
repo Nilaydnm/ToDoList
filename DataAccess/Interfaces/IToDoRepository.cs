@@ -16,7 +16,7 @@ namespace DataAccess.Interfaces
         Task DeleteAsync(ToDo todo);
         Task<List<ToDo>> GetByUserIdAsync(int userId);
         Task<bool> GroupExistsAsync(int groupId);
-
+        Task UpdateWithoutValidationAsync(ToDo todo);
         Task SaveChangesAsync();
     }
 }

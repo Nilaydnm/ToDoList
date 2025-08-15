@@ -14,5 +14,8 @@ namespace Business.Interfaces
         Task<int?> GetGroupIdByToDoIdAsync(int todoId, bool isDeleted = false);
         Task UpdateWithoutValidationAsync(ToDo todo);
         Task<OperationResult> CreateAsync(ToDo todo, int userId);
+        Task<OperationResult> UpdateValidatedAsync(ToDo todo, int userId);
+        Task<OperationResult<int>> ToggleCompleteAsync(int id, int userId);
+
     }
 }

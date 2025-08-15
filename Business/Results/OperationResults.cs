@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FluentValidation.Results;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -33,5 +34,18 @@ namespace Business.Results
 
         public static OperationResult<T> Ok(T data) => new(true, data);
         public static new OperationResult<T> Fail(params string[] errors) => new(false, default, errors);
+    }
+
+    public class OperationResultWithValidation : OperationResult
+    {
+        public ValidationResult? ValidationErrors { get; }
+        private OperationResultWithValidation(bool succeeded, ValidationResult? validationErrors = null, IEnumerable<string>? errors = null)
+            : base(succeeded, errors)
+        {
+            ValidationErrors = validationErrors;
+        }
+        public static OperationResultWithValidation Ok() => new(true);
+        public static OperationResultWithValidation Fail(ValidationResult validationErrors)
+            => new(false, validationErrors);
     }
 }

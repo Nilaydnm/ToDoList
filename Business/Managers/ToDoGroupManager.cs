@@ -1,6 +1,7 @@
 ﻿using Business.Interfaces;
 using Business.Results;
 using DataAccess.Interfaces;
+using DataAccess.Repositories;
 using Entities;
 using FluentValidation;
 using System.Linq.Expressions;
@@ -63,7 +64,7 @@ namespace Business.Managers
         public Task<ToDoGroup> GetByIdAsync(int id, bool isDeleted = false)
             => _toDoGroupRepository.GetByIdAsync(id, isDeleted);
 
-        
+
         public async Task DeleteAsync(int id, DeleteAction action = DeleteAction.Soft)
         {
             var group = await _toDoGroupRepository.GetByIdAsync(id, isDeleted: true);
@@ -73,7 +74,7 @@ namespace Business.Managers
             {
                 case DeleteAction.Hard:
                     {
-                       
+
                         var todos = await _todoRepo.GetAllAsync(t => t.GroupId == id, isDeleted: true);
                         foreach (var t in todos)
                             _todoRepo.Remove(t);
@@ -93,7 +94,7 @@ namespace Business.Managers
                             await _toDoGroupRepository.SaveChangesAsync();
                         }
 
-                       
+
                         var childs = await _todoRepo.GetAllAsync(t => t.GroupId == id, isDeleted: true);
                         foreach (var t in childs)
                         {
@@ -116,7 +117,7 @@ namespace Business.Managers
                             await _toDoGroupRepository.SaveChangesAsync();
                         }
 
-                       
+
                         var childs2 = await _todoRepo.GetAllAsync(t => t.GroupId == id, isDeleted: true);
                         foreach (var t in childs2)
                         {
@@ -132,9 +133,41 @@ namespace Business.Managers
             }
         }
 
-        // Kullanılmayan/boş kalanlar istersen tamamen kaldırılabilir:
-        // public Task DeleteAsync(int Id) => throw new NotImplementedException();
-        // public Task<User> GetByUsernameAsync(string username) => throw new NotImplementedException();
-        // public async Task DeleteAsync(ToDoGroup group) { ... }  // kullanılmıyor
+        public async Task<OperationResult> CreateAsync(ToDoGroup group, int userId)
+        {
+            group.UserId = userId;
+
+            var vr = await _validator.ValidateAsync(group);
+            if (!vr.IsValid)
+                return OperationResultWithValidation.Fail(vr);
+
+            await _toDoGroupRepository.AddAsync(group);
+            await _toDoGroupRepository.SaveChangesAsync();
+            return OperationResult.Ok();
+        }
+
+        public async Task<OperationResult> UpdateValidatedAsync(ToDoGroup group, int userId)
+        {
+            var existing = await _toDoGroupRepository.GetByIdAsync(group.Id, isDeleted: false);
+            if (existing == null)
+                return OperationResult.Fail("Grup bulunamadı.");
+
+            if (existing.UserId != userId)
+                return OperationResult.Fail("Bu grubu düzenleme yetkiniz yok.");
+
+            existing.Title = (group.Title ?? "").Trim();
+
+            var vr = await _validator.ValidateAsync(existing);
+            if (!vr.IsValid)
+                return OperationResult.Fail(vr.Errors.Select(e => e.ErrorMessage).ToArray());
+
+            _toDoGroupRepository.Update(existing);
+            await _toDoGroupRepository.SaveChangesAsync();
+            return OperationResult.Ok();
+        }
+
+
     }
+
 }
+

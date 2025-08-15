@@ -1,4 +1,5 @@
-﻿using Entities;
+﻿using Business.Results;
+using Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,9 +12,9 @@ namespace Business.Interfaces
     {
         Task<List<ToDoGroup>> GetGroupsWithTasksAsync();
         Task<ToDoGroup> GetByIdWithTasksAsync(int id);
-
         Task<List<ToDoGroup>> GetGroupsWithTasksByUserIdAsync(int userId);
-
+        Task<OperationResult> CreateAsync(ToDoGroup group, int userId);
+        Task<OperationResult> UpdateValidatedAsync(ToDoGroup group, int userId);
 
     }
 }

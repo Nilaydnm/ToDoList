@@ -1,90 +1,197 @@
 ﻿@model List<Entities.ToDoGroup>
 @{
     ViewData["Title"] = "Yapılacaklar";
+
+    var status = (Context.Request.Query["status"].FirstOrDefault() ?? "all").ToLowerInvariant();
+    var qText = (Context.Request.Query["q"].FirstOrDefault() ?? "").Trim();
+
+    DateTime? from = null, to = null;
+    if (DateTime.TryParse(Context.Request.Query["from"].FirstOrDefault(), out var fromTmp)) from = fromTmp.Date;
+    if (DateTime.TryParse(Context.Request.Query["to"].FirstOrDefault(), out var toTmp)) to = toTmp.Date;
+
+    var fromVal = from.HasValue ? from.Value.ToString("yyyy-MM-dd") : "";
+    var toVal = to.HasValue ? to.Value.ToString("yyyy-MM-dd") : "";
+
+    bool Contains(string s) => string.IsNullOrWhiteSpace(qText) || (s ?? "").ToLower().Contains(qText.ToLower());
 }
 
 <style>
-    .deadline-expired {
-        color: #d00000;
-        text-decoration: line-through;
-        font-weight: bold;
-    }
+  .deadline-expired { color:#d00000; text-decoration:line-through; font-weight:bold; }
 </style>
 
 <div class="container mt-4">
-    <h2 class="mb-3">Yeni Yapılacaklar Ekle</h2>
+  <h2 class="mb-3">Yeni Yapılacaklar Ekle</h2>
 
-    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+  @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
 
-    <form method="post" asp-action="Add" class="row g-2 align-items-center mb-4">
-        @Html.AntiForgeryToken()
-        <div class="col-auto">
-            <input type="text" name="title" class="form-control" placeholder="Proje başlığı girin..." />
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-primary">Ekle</button>
-        </div>
-        <span class="text-danger">@Html.ValidationMessage("Title")</span>
-    </form>
+  <form method="post" asp-action="Add" class="row g-2 align-items-center mb-4">
+    @Html.AntiForgeryToken()
+    <div class="col-auto">
+      <input type="text" name="title" class="form-control" placeholder="Proje başlığı girin..." />
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">Ekle</button>
+    </div>
+    <span class="text-danger">@Html.ValidationMessage("Title")</span>
+  </form>
 
-    @if (Model != null && Model.Any(x => !x.IsDeleted))
+  <form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-md-3">
+      <label class="form-label fw-bold">Durum</label>
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        @if (status == "all")   { <option value="all" selected>Tümü</option> }   else { <option value="all">Tümü</option> }
+        @if (status == "active"){ <option value="active" selected>Aktif</option>} else { <option value="active">Aktif</option> }
+        @if (status == "done")  { <option value="done" selected>Tamamlanmış</option> } else { <option value="done">Tamamlanmış</option> }
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-bold">Arama</label>
+      <input type="text" name="q" value="@qText" class="form-control" placeholder="Proje veya görev başlığı">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-bold">Başlangıç</label>
+      <input type="date" name="from" class="form-control" value="@fromVal">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-bold">Bitiş</label>
+      <input type="date" name="to" class="form-control" value="@toVal">
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-secondary w-100" type="submit">Uygula</button>
+    </div>
+  </form>
+
+    @if (Model != null && Model.Any(g => !g.IsDeleted))
     {
+        var groups = Model.Where(g => g != null).ToList();
+
+        var filtered = groups.Where(g => !g.IsDeleted).ToList();
+
+        if (status == "active")
+        {
+            filtered = filtered.Where(g =>
+            (g.ToDos ?? new List<Entities.ToDo>())
+            .Any(t => !t.IsDeleted && !t.IsCompleted)
+            ).ToList();
+        }
+        else if (status == "done")
+        {
+            filtered = filtered.Where(g =>
+            {
+                var todos = (g.ToDos ?? new List<Entities.ToDo>())
+            .Where(t => !t.IsDeleted).ToList();
+                return todos.Any() && todos.All(t => t.IsCompleted);
+            }).ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(qText))
+        {
+            var qLower = qText.ToLowerInvariant();
+            filtered = filtered.Where(g =>
+            (g.Title ?? "").ToLowerInvariant().Contains(qLower) ||
+            (g.ToDos ?? new List<Entities.ToDo>())
+            .Any(t => !t.IsDeleted && (t.Title ?? "").ToLowerInvariant().Contains(qLower))
+            ).ToList();
+        }
+
+        if (from.HasValue)
+        {
+            filtered = filtered.Where(g =>
+            (g.ToDos ?? new List<Entities.ToDo>())
+            .Any(t => !t.IsDeleted &&
+            ((t.Deadline.HasValue && t.Deadline.Value.Date >= from.Value) ||
+            t.CreatedAt.Date >= from.Value))
+            ).ToList();
+        }
+        if (to.HasValue)
+        {
+            filtered = filtered.Where(g =>
+            (g.ToDos ?? new List<Entities.ToDo>())
+            .Any(t => !t.IsDeleted &&
+            ((t.Deadline.HasValue && t.Deadline.Value.Date <= to.Value) ||
+            t.CreatedAt.Date <= to.Value))
+            ).ToList();
+        }
+
         <h4>Projeler</h4>
 
-        @foreach (var group in Model.Where(x => !x.IsDeleted))
+        @if (!filtered.Any())
         {
-            <div class="card mb-3 shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="alert alert-info">Filtrenize uyan proje bulunamadı.</div>
+        }
+        else
+        {
+            @foreach (var group in filtered)
+            {
+                var tasks = (group.ToDos ?? new List<Entities.ToDo>())
+                .Where(t => !t.IsDeleted)
+                .ToList();
 
-                    
-                    <form method="post" asp-action="Edit" class="d-flex flex-grow-1">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@group.Id" />
-                        <input type="text"
-                               name="title"
-                               class="form-control me-2"
-                               value="@group.Title"
-                               ondblclick="this.removeAttribute('readonly')"
-                               onblur="this.form.submit()"
-                               onkeydown="if(event.key === 'Enter'){ event.preventDefault(); this.blur(); }"
-                               readonly />
-                    </form>
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
 
-                    <div class="d-flex align-items-center">
-                        <a asp-controller="ToDoGroup" asp-action="Detail" asp-route-id="@group.Id" class="btn btn-sm btn-outline-secondary me-2">
-                            Görevler
-                        </a>
-
-                       
-                        <form asp-controller="ToDoGroup" asp-action="Delete" method="post"
-                              onsubmit="return confirm('Projeyi silmek istiyor musunuz?')">
+                        <form method="post" asp-action="Edit" class="d-flex flex-grow-1">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@group.Id" />
-                            <input type="hidden" name="mode" value="Soft" />
-                            <button class="btn btn-sm btn-outline-danger">Sil</button>
+                            <input type="text"
+                                   name="title"
+                                   class="form-control me-2"
+                                   value="@group.Title"
+                                   ondblclick="this.removeAttribute('readonly')"
+                                   onblur="this.form.submit()"
+                                   onkeydown="if(event.key === 'Enter'){ event.preventDefault(); this.blur(); }"
+                                   readonly />
                         </form>
-                    </div>
-                </div>
 
-                @if (group.ToDos != null && group.ToDos.Any())
-                {
-                    <ul class="list-group list-group-flush">
-                        @foreach (var task in group.ToDos)
-                        {
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>@task.Title</span>
-                                <small class="@(task.Deadline.HasValue && task.Deadline.Value < DateTime.Now ? "deadline-expired" : "text-muted")">
-                                    @(task.Deadline.HasValue ? $"Deadline: {task.Deadline.Value:dd.MM.yyyy HH:mm}" : "-")
-                                </small>
-                            </li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <div class="card-body text-muted">Henüz yapılacaklar eklenmemiş.</div>
-                }
-            </div>
+                        <div class="d-flex align-items-center">
+                            <a asp-controller="ToDoGroup" asp-action="Detail"
+                               asp-route-id="@group.Id"
+                               asp-route-status="@status"
+                               asp-route-q="@qText"
+                               asp-route-from="@fromVal"
+                               asp-route-to="@toVal"
+                               class="btn btn-sm btn-outline-secondary me-2">
+                                Görevler
+                            </a>
+
+                            <form asp-controller="ToDoGroup" asp-action="Delete" method="post"
+                                  onsubmit="return confirm('Projeyi silmek istiyor musunuz?')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@group.Id" />
+                                <input type="hidden" name="mode" value="Soft" />
+                                <button class="btn btn-sm btn-outline-danger">Sil</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    @if (tasks.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var t in tasks.Take(5))
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center @(t.IsCompleted ? "text-muted" : null)">
+                                    @if (t.IsCompleted)
+                                    {
+                                        <del>@t.Title</del>
+                                    }
+                                    else
+                                    {
+
+                                        @t.Title
+                                    }
+                                    <small class="@(t.Deadline.HasValue && t.Deadline.Value < DateTime.Now && !t.IsCompleted ? "deadline-expired" : "text-muted")">
+                                        @(t.Deadline.HasValue ? $"Deadline: {t.Deadline.Value:dd.MM.yyyy HH:mm}" : "-")
+                                    </small>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="card-body text-muted">Henüz yapılacaklar eklenmemiş.</div>
+                    }
+                </div>
+            }
         }
     }
     else
@@ -92,49 +199,4 @@
         <div class="alert alert-info">Henüz herhangi yapılacaklar başlığı eklenmemiş.</div>
     }
 
-    @if (Model != null && Model.Any(x => x.IsDeleted))
-    {
-        <h4 class="mt-5">Silinen Projeler</h4>
-
-        @foreach (var group in Model.Where(x => x.IsDeleted))
-        {
-            <div class="card mb-3 shadow-sm bg-light opacity-75">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <strong class="text-muted text-decoration-line-through">@group.Title</strong>
-
-                    <div class="d-flex align-items-center gap-2">
-
-                       
-                        <form asp-controller="ToDoGroup" asp-action="Delete" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@group.Id" />
-                            <input type="hidden" name="mode" value="UndoSoft" />
-                            <button class="btn btn-sm btn-warning">Geri Al</button>
-                        </form>
-
-                     
-                        <form asp-controller="ToDoGroup" asp-action="Delete" method="post"
-                              onsubmit="return confirm('Kalıcı silinecek. Bu işlem geri alınamaz. Emin misiniz?');">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@group.Id" />
-                            <input type="hidden" name="mode" value="Hard" />
-                            <button class="btn btn-sm btn-outline-danger">Kalıcı Sil</button>
-                        </form>
-                    </div>
-                </div>
-
-                @if (group.ToDos != null && group.ToDos.Any())
-                {
-                    <ul class="list-group list-group-flush">
-                        @foreach (var task in group.ToDos)
-                        {
-                            <li class="list-group-item text-muted">
-                                <del>@task.Title</del>
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
-        }
-    }
 </div>

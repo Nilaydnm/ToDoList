@@ -51,7 +51,7 @@ namespace Business.Managers
             => await _toDoRepository.GetAllAsync(t => t.UserId == userId, isDeleted);
 
         public async Task<ToDo> GetByIdAsync(int id, bool isDeleted)
-            => await _toDoRepository.GetByIdAsync(id, isDeleted);
+            => await _toDoRepository.GetByIdAsync(id, isDeleted: false);
 
         public async Task<int?> GetGroupIdByToDoIdAsync(int todoId, bool isDeleted = false)
         {
@@ -62,7 +62,7 @@ namespace Business.Managers
         public Task<List<ToDo>> GetAllAsync(Expression<Func<ToDo, bool>> filter = null, bool isDeleted = false)
             => _toDoRepository.GetAllAsync(filter, isDeleted);
 
-     
+
         public async Task DeleteAsync(int id, DeleteAction action = DeleteAction.Soft)
         {
             var entity = await _toDoRepository.GetByIdAsync(id, isDeleted: true);
@@ -79,7 +79,7 @@ namespace Business.Managers
                     if (!entity.IsDeleted)
                     {
                         entity.IsDeleted = true;
-                        _toDoRepository.Update(entity);
+                        await _toDoRepository.UpdateAsync(entity);
                         await _toDoRepository.SaveChangesAsync();
                     }
                     break;
@@ -88,12 +88,14 @@ namespace Business.Managers
                     if (entity.IsDeleted)
                     {
                         entity.IsDeleted = false;
-                        _toDoRepository.Update(entity);
+                        await _toDoRepository.UpdateAsync(entity);
                         await _toDoRepository.SaveChangesAsync();
                     }
                     break;
             }
         }
+
+
 
         public async Task<OperationResult> CreateAsync(ToDo todo, int userId)
         {
@@ -102,12 +104,51 @@ namespace Business.Managers
 
             var vr = await _validator.ValidateAsync(todo);
             if (!vr.IsValid)
-                return OperationResult.Fail(vr.Errors.Select(e => e.ErrorMessage).ToArray());
+                return OperationResultWithValidation.Fail(vr);
 
             await _toDoRepository.AddAsync(todo);
             await _toDoRepository.SaveChangesAsync();
 
             return OperationResult.Ok();
         }
+
+
+        public async Task<OperationResult> UpdateValidatedAsync(ToDo todo, int userId)
+        {
+            var existing = await _toDoRepository.GetByIdAsync(todo.Id, isDeleted: false);
+            if (existing == null)
+                return OperationResult.Fail("Görev bulunamadı.");
+
+            if (existing.UserId != userId)
+                return OperationResult.Fail("Bu görevi düzenleme yetkiniz yok.");
+
+            existing.Title = todo.Title?.Trim();
+            existing.Deadline = todo.Deadline;
+
+            var vr = await _validator.ValidateAsync(existing);
+            if (!vr.IsValid)
+                return OperationResultWithValidation.Fail(vr);
+
+            await _toDoRepository.UpdateAsync(existing); 
+            await _toDoRepository.SaveChangesAsync();
+
+            return OperationResult.Ok();
+        }
+
+        public async Task<OperationResult<int>> ToggleCompleteAsync(int id, int userId)
+        {
+            var t = await _toDoRepository.GetByIdAsync(id, isDeleted: false);
+            if (t is null) return OperationResult<int>.Fail("Görev bulunamadı.");
+            if (t.UserId != userId) return OperationResult<int>.Fail("Yetkiniz yok.");
+
+            t.IsCompleted = !t.IsCompleted;
+            t.CompletedAt = t.IsCompleted ? DateTime.UtcNow : null;
+
+            await _toDoRepository.UpdateAsync(t);            
+            await _toDoRepository.SaveChangesAsync();
+
+            return OperationResult<int>.Ok(t.GroupId ?? 0);
+        }
+
     }
 }

@@ -1,9 +1,9 @@
 ﻿using Business.Interfaces;
+using Business.Results;
 using Entities;
-using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using ToDoList.Infrastructure; 
 
 namespace ToDoList.Controllers
 {
@@ -12,62 +12,37 @@ namespace ToDoList.Controllers
     {
         private readonly IToDoService _toDoService;
         private readonly IToDoGroupService _toDoGroupService;
-        private readonly IValidator<ToDo> _toDoValidator;
 
-        public ToDoController(IToDoService toDoService, IToDoGroupService toDoGroupService, IValidator<ToDo> toDoValidator)
+        public ToDoController(IToDoService toDoService, IToDoGroupService toDoGroupService)
         {
             _toDoService = toDoService;
             _toDoGroupService = toDoGroupService;
-            _toDoValidator = toDoValidator;
         }
 
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            var todos = await _toDoService.GetByUserIdAsync(userId);
+            var uid = User.GetUserId();
+            if (uid is null) return Unauthorized();
+
+            var todos = await _toDoService.GetByUserIdAsync(uid.Value);
             return View(todos);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Add(string title, DateTime? deadline, int groupId)
-        {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-            var userId = int.Parse(userIdStr);
-
-            var todo = new ToDo
-            {
-                Title = title,
-                GroupId = groupId,
-                Deadline = deadline
-            };
-
-            var result = await _toDoService.CreateAsync(todo, userId);
-            if (!result.Succeeded)
-            {
-                
-                foreach (var e in result.Errors)
-                    ModelState.AddModelError("", e);
-
-                
-                ViewBag.PreviousTitle = title;
-                ViewBag.PreviousDeadline = deadline;
-
-                var group = await _toDoGroupService.GetByIdWithTasksAsync(groupId);
-                return View("~/Views/ToDoGroup/Detail.cshtml", group);
-            }
-
-            return RedirectToAction("Detail", "ToDoGroup", new { id = groupId });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, DeleteAction mode = DeleteAction.Soft)
         {
-            // Hard delete sonrası kayıt uçabileceği için, redirect edebilmek adına GID’yi ÖNCE al
+            var uid = User.GetUserId();
+            if (uid is null) return Unauthorized();
+
+            var todo = await _toDoService.GetByIdAsync(id, isDeleted: true);
+            if (todo is null) return NotFound();
+            if (todo.UserId != uid.Value) return Forbid();
+
             var gid = await _toDoService.GetGroupIdByToDoIdAsync(id, isDeleted: true);
 
-            await _toDoService.DeleteAsync(id, mode);
+            await _toDoService.DeleteAsync(id, mode); 
 
             if (gid is null || gid == 0)
                 return RedirectToAction("Index", "ToDoGroup");
@@ -75,68 +50,110 @@ namespace ToDoList.Controllers
             return RedirectToAction("Detail", "ToDoGroup", new { id = gid });
         }
 
+
+
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Add(string title, DateTime? deadline, int groupId)
+        {
+            var uid = User.GetUserId();
+            if (uid is null) return Unauthorized();
+
+            var group = await _toDoGroupService.GetByIdWithTasksAsync(groupId);
+            if (group is null) return NotFound();
+            if (group.UserId != uid.Value) return Forbid();
+
+            var result = await _toDoService.CreateAsync(
+                new ToDo { Title = title?.Trim(), GroupId = groupId, Deadline = deadline },
+                uid.Value);
+
+            if (!result.Succeeded)
+            {
+                if (result is OperationResultWithValidation ov && ov.ValidationErrors is not null)
+                    ModelState.AddValidationErrors(ov.ValidationErrors);
+                else
+                    ModelState.AddErrors(result.Errors);
+
+                ViewBag.PreviousTitle = title;
+                ViewBag.PreviousDeadline = deadline;
+
+                return View("~/Views/ToDoGroup/Detail.cshtml", group);
+            }
+
+            return RedirectToAction("Detail", "ToDoGroup", new { id = groupId });
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleComplete(int id)
         {
-            var todo = await _toDoService.GetByIdAsync(id);
-            if (todo == null) return NotFound();
+            var uid = User.GetUserId();
+            if (uid is null) return Unauthorized();
 
-            todo.IsCompleted = !todo.IsCompleted;
-            todo.CompletedAt = todo.IsCompleted ? DateTime.Now : null;
+            var result = await _toDoService.ToggleCompleteAsync(id, uid.Value);
 
-            // TODO normal update metodu ile yapılacak ve buradaki business kodları kaldırılacak
-            await _toDoService.UpdateWithoutValidationAsync(todo);
+            if (!result.Succeeded)
+            {
+                ModelState.AddErrors(result.Errors);
 
-            return RedirectToAction("Detail", "ToDoGroup", new { id = todo.GroupId });
+                var gid = await _toDoService.GetGroupIdByToDoIdAsync(id, isDeleted: true);
+                if (gid is not null && gid != 0)
+                {
+                    var group = await _toDoGroupService.GetByIdWithTasksAsync(gid.Value);
+                    return View("~/Views/ToDoGroup/Detail.cshtml", group);
+                }
+                return RedirectToAction("Index", "ToDoGroup");
+            }
+
+            return RedirectToAction("Detail", "ToDoGroup", new { id = result.Data });
         }
 
 
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
+            var uid = User.GetUserId();
+            if (uid is null) return Unauthorized();
+
             var todo = await _toDoService.GetByIdAsync(id);
             if (todo == null) return NotFound();
+            if (todo.UserId != uid.Value) return Forbid();
 
             return View(todo);
         }
 
 
         [HttpPost]
-        public async Task<IActionResult> Edit(ToDo todo)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(ToDo input)
         {
-            ToDo existingToDo = null;
+            var uid = User.GetUserId();
+            if (uid is null) return Unauthorized();
 
-            try
+            var result = await _toDoService.UpdateValidatedAsync(input, uid.Value);
+
+            if (!result.Succeeded)
             {
-                existingToDo = await _toDoService.GetByIdAsync(todo.Id);
-                if (existingToDo == null) return NotFound();
+                if (result is OperationResultWithValidation ov && ov.ValidationErrors is not null)
+                    ModelState.AddValidationErrors(ov.ValidationErrors);
+                else
+                    ModelState.AddErrors(result.Errors);
 
-                existingToDo.Title = todo.Title;
-                existingToDo.Deadline = todo.Deadline;
-
-                await _toDoService.UpdateAsync(existingToDo); 
-
-                return RedirectToAction("Detail", "ToDoGroup", new { id = existingToDo.GroupId });
-            }
-            catch (FluentValidation.ValidationException ex)
-            {
-                foreach (var error in ex.Errors)
+                var gid = input.GroupId ?? 0;
+                if (gid != 0)
                 {
-                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+                    ViewBag.PreviousTitle = input.Title;
+                    ViewBag.PreviousDeadline = input.Deadline;
+
+                    var group = await _toDoGroupService.GetByIdWithTasksAsync(gid);
+                    return View("~/Views/ToDoGroup/Detail.cshtml", group);
                 }
-
-                var groupId = todo.GroupId.HasValue
-                    ? todo.GroupId.Value
-                    : (existingToDo?.GroupId ?? 0);
-
-                var group = await _toDoGroupService.GetByIdWithTasksAsync(groupId);
-                return View("~/Views/ToDoGroup/Detail.cshtml", group);
+                return RedirectToAction("Index", "ToDoGroup");
             }
+
+            return RedirectToAction("Detail", "ToDoGroup", new { id = input.GroupId });
         }
-
-       
-
-       
 
 
     }

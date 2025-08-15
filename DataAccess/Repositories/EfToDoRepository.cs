@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using DataAccess.Context;
 using DataAccess.Interfaces;
 using Entities;
-using System.Threading.Tasks;
 
 namespace DataAccess.Repositories
 {
@@ -14,46 +12,39 @@ namespace DataAccess.Repositories
     {
         private readonly AppDbContext _context;
 
-        public async Task UpdateAsync(ToDo todo)
-        {
-            _context.ToDos.Update(todo);
-            await _context.SaveChangesAsync();
-        }
-        public async Task UpdateWithoutValidationAsync(ToDo todo)
-        {
-            _context.ToDos.Update(todo);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task DeleteAsync(ToDo todo)
-        {
-            _context.ToDos.Remove(todo);
-        }
-        public async Task<bool> GroupExistsAsync(int groupId)
-        {
-            return await _context.ToDoGroups.AnyAsync(g => g.Id == groupId);
-        }
-
         public EfToDoRepository(AppDbContext context) : base(context)
         {
             _context = context;
         }
-        public async Task SaveChangesAsync()
+
+
+        public Task UpdateAsync(ToDo todo)
         {
-            await _context.SaveChangesAsync();
-        }
-        public async Task<List<ToDo>> GetByUserIdAsync(int userId)
-        {
-            return await _context.ToDos
-                                 .Where(t => t.UserId == userId)
-                                 .ToListAsync();
+            _context.ToDos.Update(todo);
+            return Task.CompletedTask;
         }
 
-        public async Task<List<ToDo>> GetToDosByUserIdAsync(int userId)
+        public Task UpdateWithoutValidationAsync(ToDo todo)
         {
-            return await _context.ToDos
-                .Where(todo => todo.UserId == userId)
-                .ToListAsync();
+            _context.ToDos.Update(todo);
+            return Task.CompletedTask;
         }
+
+        public Task DeleteAsync(ToDo todo)
+        {
+            _context.ToDos.Remove(todo);
+            return Task.CompletedTask;
+        }
+
+        public Task SaveChangesAsync() => _context.SaveChangesAsync();
+
+        public Task<bool> GroupExistsAsync(int groupId)
+            => _context.ToDoGroups.AnyAsync(g => g.Id == groupId);
+
+        public Task<List<ToDo>> GetByUserIdAsync(int userId)
+            => _context.ToDos.Where(t => t.UserId == userId).ToListAsync();
+
+        public Task<List<ToDo>> GetToDosByUserIdAsync(int userId)
+            => _context.ToDos.Where(t => t.UserId == userId).ToListAsync();
     }
 }
