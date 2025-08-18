@@ -1,9 +1,12 @@
-﻿using Business.Interfaces;
+﻿using Business.DTOs;
+using Business.Interfaces;
 using Business.Results;
 using DataAccess.Interfaces;
 using Entities;
 using FluentValidation;
 using System.Linq.Expressions;
+
+
 
 namespace Business.Managers
 {
@@ -11,11 +14,13 @@ namespace Business.Managers
     {
         private readonly IToDoRepository _toDoRepository;
         private readonly IValidator<ToDo> _validator;
+        private readonly IToDoGroupRepository _toDoGroupRepository;
 
-        public ToDoManager(IToDoRepository toDoRepository, IValidator<ToDo> validator)
+        public ToDoManager(IToDoRepository toDoRepository, IValidator<ToDo> validator, IToDoGroupRepository toDoGroupRepository)
         {
             _toDoRepository = toDoRepository;
             _validator = validator;
+            _toDoGroupRepository = toDoGroupRepository;
         }
 
         public async Task AddAsync(ToDo todo)
@@ -149,6 +154,26 @@ namespace Business.Managers
 
             return OperationResult<int>.Ok(t.GroupId ?? 0);
         }
+
+        public async Task<List<ToDoDeadlineDto>> GetDeadlineInfoByGroupAsync(int groupId, int userId)
+        {
+            var group = await _toDoGroupRepository.GetByIdWithTasksAsync(groupId);
+            if (group is null || group.UserId != userId)
+                return new List<ToDoDeadlineDto>();
+
+            var now = DateTime.Now;
+
+            var todos = (group.ToDos ?? Enumerable.Empty<ToDo>())
+                .Where(t => !t.IsDeleted);
+
+            return todos.Select(t => new ToDoDeadlineDto
+            {
+                ToDoId = t.Id,
+                Deadline = t.Deadline,
+                Delta = t.Deadline.HasValue ? t.Deadline.Value - now : (TimeSpan?)null
+            }).ToList();
+        }
+
 
     }
 }

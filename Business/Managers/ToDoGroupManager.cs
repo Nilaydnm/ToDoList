@@ -1,4 +1,5 @@
-﻿using Business.Interfaces;
+﻿using Business.DTOs;
+using Business.Interfaces;
 using Business.Results;
 using DataAccess.Interfaces;
 using DataAccess.Repositories;
@@ -165,6 +166,36 @@ namespace Business.Managers
             await _toDoGroupRepository.SaveChangesAsync();
             return OperationResult.Ok();
         }
+
+        public async Task<List<ToDoGroupStatsDto>> GetGroupStatsByUserIdAsync(int userId)
+        {
+            var groups = await _toDoGroupRepository.GetGroupsWithTasksByUserIdAsync(userId);
+            var list = new List<ToDoGroupStatsDto>();
+            var now = DateTime.Now;
+
+            foreach (var g in groups)
+            {
+                var todos = (g.ToDos ?? new List<ToDo>()).Where(t => !t.IsDeleted).ToList();
+                var total = todos.Count;
+                var completed = todos.Count(t => t.IsCompleted);
+                var active = total - completed;
+
+                var overdue = todos.Count(t => !t.IsCompleted && t.Deadline.HasValue && t.Deadline.Value < now);
+
+                list.Add(new ToDoGroupStatsDto
+                {
+                    GroupId = g.Id,
+                    Title = g.Title ?? string.Empty,
+                    Total = total,
+                    Completed = completed,
+                    Active = active,
+                    Overdue = overdue
+                });
+            }
+
+            return list;
+        }
+
 
 
     }

@@ -1,4 +1,5 @@
-﻿using Business.Results;
+﻿using Business.DTOs;
+using Business.Results;
 using Entities;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,7 @@ namespace Business.Interfaces
         Task<OperationResult> CreateAsync(ToDo todo, int userId);
         Task<OperationResult> UpdateValidatedAsync(ToDo todo, int userId);
         Task<OperationResult<int>> ToggleCompleteAsync(int id, int userId);
+        Task<List<ToDoDeadlineDto>> GetDeadlineInfoByGroupAsync(int groupId, int userId);
 
     }
 }

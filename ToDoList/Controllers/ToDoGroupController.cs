@@ -23,7 +23,7 @@ namespace ToDoList.Controllers
 
         }
 
-        
+
         [HttpGet]
         public async Task<IActionResult> Detail(int id, string status = "all")
         {
@@ -34,9 +34,13 @@ namespace ToDoList.Controllers
             if (group == null) return NotFound();
             if (group.UserId != uid) return Forbid();
 
+            var deadlineInfos = await _toDoService.GetDeadlineInfoByGroupAsync(id, uid.Value);
+            ViewBag.DeadlineInfo = deadlineInfos.ToDictionary(d => d.ToDoId, d => d);
+
             ViewBag.Status = (status ?? "all").ToLowerInvariant();
             return View(group);
         }
+
 
         [HttpGet]
         public async Task<IActionResult> Index(string status = "all")
@@ -45,9 +49,15 @@ namespace ToDoList.Controllers
             if (uid is null) return Unauthorized();
 
             var groups = await _groupService.GetGroupsWithTasksByUserIdAsync(uid.Value);
+
+            var stats = await _groupService.GetGroupStatsByUserIdAsync(uid.Value);
+            ViewBag.GroupStats = stats.ToDictionary(s => s.GroupId, s => s);
+
             ViewBag.Status = (status ?? "all").ToLowerInvariant();
             return View(groups);
         }
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Add(string title)

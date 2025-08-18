@@ -1,4 +1,6 @@
 ﻿@model List<Entities.ToDoGroup>
+@using Business.DTOs
+
 @{
     ViewData["Title"] = "Yapılacaklar";
 
@@ -13,6 +15,9 @@
     var toVal = to.HasValue ? to.Value.ToString("yyyy-MM-dd") : "";
 
     bool Contains(string s) => string.IsNullOrWhiteSpace(qText) || (s ?? "").ToLower().Contains(qText.ToLower());
+
+    // ⬇️ DTO tabanlı grup istatistikleri (Controller'dan ViewBag ile geldi)
+    var statsDict = ViewBag.GroupStats as IDictionary<int, ToDoGroupStatsDto>;
 }
 
 <style>
@@ -83,7 +88,7 @@
         </div>
         <div class="col-md-2 d-flex gap-2">
             <button class="btn btn-secondary w-100" type="submit">Uygula</button>
-            <a asp-action="Index" class="btn btn-outline-secondary w-100">Temizle</a>  @* <-- YENİ *@
+            <a asp-action="Index" class="btn btn-outline-secondary w-100">Temizle</a>
         </div>
     </form>
 
@@ -103,8 +108,7 @@
         {
             filtered = filtered.Where(g =>
             {
-                var todos = (g.ToDos ?? new List<Entities.ToDo>())
-            .Where(t => !t.IsDeleted).ToList();
+                var todos = (g.ToDos ?? new List<Entities.ToDo>()).Where(t => !t.IsDeleted).ToList();
                 return todos.Any() && todos.All(t => t.IsCompleted);
             }).ToList();
         }
@@ -148,9 +152,8 @@
         {
             @foreach (var group in filtered)
             {
-                var tasks = (group.ToDos ?? new List<Entities.ToDo>())
-                .Where(t => !t.IsDeleted)
-                .ToList();
+                var tasks = (group.ToDos ?? new List<Entities.ToDo>()).Where(t => !t.IsDeleted).ToList();
+                var s = (statsDict != null && statsDict.ContainsKey(group.Id)) ? statsDict[group.Id] : null;
 
                 <div class="card mb-3 shadow-sm">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -169,6 +172,22 @@
                         </form>
 
                         <div class="d-flex align-items-center">
+                            @* ⬇️ DTO tabanlı özet istatistik dropdown *@
+                            @if (s != null)
+                            {
+                                <div class="dropdown me-2">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Özet
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li class="dropdown-item"><strong>Toplam:</strong> @s.Total</li>
+                                        <li class="dropdown-item"><strong>Tamamlanan:</strong> @s.Completed</li>
+                                        <li class="dropdown-item"><strong>Tamamlanmayan:</strong> @s.Active</li>
+                                        <li class="dropdown-item"><strong>Tarihi Geçen:</strong> @s.Overdue</li>
+                                    </ul>
+                                </div>
+                            }
+
                             <a asp-controller="ToDoGroup" asp-action="Detail" asp-route-id="@group.Id"
                                class="btn btn-sm btn-outline-secondary me-2">Görevler</a>
 
@@ -194,6 +213,7 @@
                                     }
                                     else
                                     {
+
                                         @t.Title
                                     }
 
@@ -202,7 +222,6 @@
                                     </small>
                                 </li>
                             }
-
                         </ul>
                     }
                     else

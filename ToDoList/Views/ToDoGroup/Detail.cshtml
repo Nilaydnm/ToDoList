@@ -1,4 +1,5 @@
 ﻿@model Entities.ToDoGroup
+@using Business.DTOs
 
 @{
     ViewData["Title"] = $"{Model.Title} - Yapılacaklar";
@@ -28,6 +29,8 @@
         (t.Deadline.HasValue && t.Deadline.Value.Date <= to.Value) || (t.CreatedAt.Date <= to.Value));
 
     tasks = tasks.OrderBy(x => x.IsCompleted).ThenBy(x => x.Deadline ?? DateTime.MaxValue);
+
+    var dDict = ViewBag.DeadlineInfo as IDictionary<int, ToDoDeadlineDto>;
 }
 
 <style>
@@ -140,6 +143,7 @@
                     <th>Durum</th>
                     <th>Oluşturulma</th>
                     <th>Deadline</th>
+                    <th>Kalan</th>   
                     <th>Tamamlanma</th>
                     <th>İşlemler</th>
                 </tr>
@@ -183,6 +187,29 @@
                         <td class="@(item.Deadline.HasValue && item.Deadline < DateTime.Now && !item.IsCompleted ? "deadline-expired" : "")">
                             @(item.Deadline?.ToString("dd.MM.yyyy HH:mm") ?? "-")
                         </td>
+
+                        <td>
+                            @{
+                                var info = (dDict != null && dDict.ContainsKey(item.Id)) ? dDict[item.Id] : null;
+                                string human = null;
+                                string humanCls = "";
+
+                                if (!item.IsCompleted && info != null && info.Deadline.HasValue)
+                                {
+                                    human = info.Humanized; 
+                                    if (info.IsOverdue) humanCls = "text-danger fw-semibold";
+                                }
+                            }
+                            @if (human != null)
+                            {
+                                <span class="@humanCls">@human</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+
 
                         <td>@(item.CompletedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
 
