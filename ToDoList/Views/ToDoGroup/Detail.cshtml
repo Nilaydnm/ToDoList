@@ -36,20 +36,37 @@
         text-decoration: line-through;
         font-weight: bold;
     }
+
+    /* --- satır içi düzenleme için ufak stil --- */
+    .row-editable input[type="text"],
+    .row-editable input[type="datetime-local"] {
+        pointer-events: none;
+        background: #f7fafc;
+    }
+
+    .row-editable.editing input[type="text"],
+    .row-editable.editing input[type="datetime-local"] {
+        pointer-events: auto;
+        background: #fff;
+        border-color: #b8d2ff;
+        box-shadow: 0 0 0 2px rgba(64,121,255,.12);
+    }
+
+    .row-actions .btn {
+        margin-left: 6px;
+    }
 </style>
 
 <div class="container mt-4">
     <h2 class="mb-3">@Model.Title</h2>
 
-    <a asp-controller="ToDoGroup" asp-action="Index"
-       asp-route-status="@status" asp-route-q="@qText"
-       asp-route-from="@fromVal" asp-route-to="@toVal"
-       class="btn btn-secondary mb-4">&larr; Proje Listesine Dön</a>
+    <a asp-controller="ToDoGroup" asp-action="Index" class="btn btn-secondary mb-4">
+        &larr; Proje Listesine Dön
+    </a>
 
     @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
 
-    <!-- Filtre barı -->
-    <form method="get" class="row g-2 align-items-end mb-4">
+    <form method="get" asp-action="Detail" class="row g-2 align-items-end mb-4">
         <input type="hidden" name="id" value="@Model.Id" />
         <div class="col-md-3">
             <label class="form-label fw-bold">Durum</label>
@@ -92,28 +109,22 @@
             <label class="form-label fw-bold">Bitiş</label>
             <input type="date" name="to" class="form-control" value="@toVal">
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2 d-flex gap-2">
             <button class="btn btn-secondary w-100" type="submit">Uygula</button>
+            <a asp-action="Detail" asp-route-id="@Model.Id" class="btn btn-outline-secondary w-100">Temizle</a>
         </div>
     </form>
 
-    <!-- Yeni görev ekleme -->
     <form asp-controller="ToDo" asp-action="Add" method="post" class="mb-4">
         @Html.AntiForgeryToken()
         <input type="hidden" name="groupId" value="@Model.Id" />
         <div class="d-flex flex-wrap align-items-end gap-3">
-            <div class="d-flex flex-column" style="min-width: 250px;">
+            <div class="d-flex flex-column" style="min-width:260px;">
                 <label class="form-label fw-bold">Başlık</label>
                 <input type="text" name="title" class="form-control" value="@ViewBag.PreviousTitle" placeholder="Görev başlığı..." />
                 <span class="text-danger">@Html.ValidationMessage("Title")</span>
             </div>
-            <div class="d-flex flex-column" style="min-width: 250px;">
-                <label class="form-label fw-bold">Deadline</label>
-                <input type="datetime-local" name="deadline" class="form-control"
-                       value="@(ViewBag.PreviousDeadline != null ? ((DateTime)ViewBag.PreviousDeadline).ToString("yyyy-MM-ddTHH:mm") : "")" />
-                <span class="text-danger">@Html.ValidationMessage("Deadline")</span>
-            </div>
-            <div class="d-flex flex-column" style="min-width: 100px;">
+            <div class="d-flex flex-column" style="min-width:100px;">
                 <label class="invisible">Ekle</label>
                 <button type="submit" class="btn btn-primary w-100">Ekle</button>
             </div>
@@ -136,17 +147,28 @@
             <tbody>
                 @foreach (var item in tasks)
                 {
-                    <tr class="@(item.IsCompleted ? "table-success" : "")">
+                    <tr class="@(item.IsCompleted ? "table-success" : "") row-editable">
                         <td>
-                            <form asp-controller="ToDo" asp-action="Edit" method="post" class="d-flex">
+                            <form asp-controller="ToDo" asp-action="Edit" method="post" class="d-flex w-100 align-items-center gap-2">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="Id" value="@item.Id" />
                                 <input type="hidden" name="GroupId" value="@item.GroupId" />
-                                <input type="text" name="Title" value="@item.Title" class="form-control me-2" />
-                                <input type="datetime-local" name="Deadline" value="@item.Deadline?.ToString("yyyy-MM-ddTHH:mm")" class="form-control me-2" />
-                                <button type="submit" class="btn btn-sm btn-warning">Güncelle</button>
+
+                                <input type="text" name="Title" class="form-control"
+                                       value="@item.Title" data-orig="@item.Title" disabled />
+
+                                <input type="datetime-local" name="Deadline" class="form-control"
+                                       value="@item.Deadline?.ToString("yyyy-MM-ddTHH:mm")"
+                                       data-orig="@item.Deadline?.ToString("yyyy-MM-ddTHH:mm")" disabled />
+
+                                <div class="ms-auto row-actions">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-edit-row>Düzenle</button>
+                                    <button type="button" class="btn btn-sm btn-success d-none" data-save-row>Kaydet</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary d-none" data-cancel-row>Vazgeç</button>
+                                </div>
                             </form>
                         </td>
+
                         <td>
                             <form asp-controller="ToDo" asp-action="ToggleComplete" method="post">
                                 @Html.AntiForgeryToken()
@@ -155,13 +177,16 @@
                                 <span class="ms-1">@(item.IsCompleted ? "✔ Tamamlandı" : "⏳ Bekliyor")</span>
                             </form>
                         </td>
+
                         <td>@item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+
                         <td class="@(item.Deadline.HasValue && item.Deadline < DateTime.Now && !item.IsCompleted ? "deadline-expired" : "")">
                             @(item.Deadline?.ToString("dd.MM.yyyy HH:mm") ?? "-")
                         </td>
+
                         <td>@(item.CompletedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+
                         <td>
-                            <!-- Kalıcı sil yok; sadece soft-delete -->
                             <form asp-controller="ToDo" asp-action="Delete" method="post" class="d-inline"
                                   onsubmit="return confirm('Silmek istediğinize emin misiniz?')">
                                 @Html.AntiForgeryToken()
@@ -180,3 +205,33 @@
         <div class="alert alert-info">Gösterilecek görev yok.</div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('click', function (e) {
+          const t = e.target;
+          if (t.matches('[data-edit-row]')) {
+            const row = t.closest('.row-editable');
+            row.classList.add('editing');
+            row.querySelectorAll('input').forEach(x => x.disabled = false);
+            row.querySelector('[data-edit-row]').classList.add('d-none');
+            row.querySelector('[data-save-row]').classList.remove('d-none');
+            row.querySelector('[data-cancel-row]').classList.remove('d-none');
+          }
+          if (t.matches('[data-cancel-row]')) {
+            const row = t.closest('.row-editable');
+            row.classList.remove('editing');
+            row.querySelectorAll('[data-orig]').forEach(x => {
+              x.value = x.getAttribute('data-orig');
+            });
+            row.querySelectorAll('input').forEach(x => x.disabled = true);
+            row.querySelector('[data-edit-row]').classList.remove('d-none');
+            row.querySelector('[data-save-row]').classList.add('d-none');
+            row.querySelector('[data-cancel-row]').classList.add('d-none');
+          }
+          if (t.matches('[data-save-row]')) {
+            t.closest('form').submit();
+          }
+        });
+    </script>
+}

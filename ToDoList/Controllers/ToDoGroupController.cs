@@ -1,6 +1,7 @@
 ﻿using Business.Interfaces;
 using Business.Results;
 using Entities;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ToDoList.Infrastructure; 
@@ -12,11 +13,14 @@ namespace ToDoList.Controllers
     {
         private readonly IToDoGroupService _groupService;
         private readonly IToDoService _toDoService;
+        private readonly IValidator<ToDoGroup> _groupValidator;
 
-        public ToDoGroupController(IToDoGroupService groupService, IToDoService toDoService)
+        public ToDoGroupController(IToDoGroupService groupService, IToDoService toDoService,IValidator<ToDoGroup> groupValidator)
         {
             _groupService = groupService;
             _toDoService = toDoService;
+            _groupValidator = groupValidator;
+
         }
 
         
@@ -51,22 +55,28 @@ namespace ToDoList.Controllers
             var uid = User.GetUserId();
             if (uid is null) return Unauthorized();
 
-            var result = await _groupService.CreateAsync(new ToDoGroup { Title = title?.Trim() }, uid.Value);
-
-            if (!result.Succeeded)
+            var entity = new ToDoGroup
             {
-                if (result is OperationResultWithValidation ov && ov.ValidationErrors is not null)
-                    ModelState.AddValidationErrors(ov.ValidationErrors);
-                else
-                    ModelState.AddErrors(result.Errors);
+                Title = title,
+                UserId = uid.Value,
+                
+            };
 
-                ViewBag.PreviousTitle = title;
-                var groups = await _groupService.GetByIdAsync(uid.Value);
-                return View("Index", groups);
+            var vr = await _groupValidator.ValidateAsync(entity);
+            if (!vr.IsValid)
+            {
+                ModelState.AddValidationErrors(vr);
+
+                var groups = await _groupService.GetAllAsync(x => x.UserId == uid.Value, isDeleted: false);
+                return View("Index", groups); 
             }
 
-            return RedirectToAction("Index");
+            await _groupService.AddAsync(entity);
+
+            return RedirectToAction(nameof(Index));
         }
+
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]

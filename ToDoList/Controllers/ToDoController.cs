@@ -60,8 +60,8 @@ namespace ToDoList.Controllers
             if (uid is null) return Unauthorized();
 
             var group = await _toDoGroupService.GetByIdWithTasksAsync(groupId);
-            if (group is null) return NotFound();
-            if (group.UserId != uid.Value) return Forbid();
+            if (group is null) return NotFound();//servis 
+            if (group.UserId != uid.Value) return Forbid();//servis
 
             var result = await _toDoService.CreateAsync(
                 new ToDo { Title = title?.Trim(), GroupId = groupId, Deadline = deadline },
@@ -69,8 +69,8 @@ namespace ToDoList.Controllers
 
             if (!result.Succeeded)
             {
-                if (result is OperationResultWithValidation ov && ov.ValidationErrors is not null)
-                    ModelState.AddValidationErrors(ov.ValidationErrors);
+                if (result is OperationResultWithValidation OperationResultWithValidation && OperationResultWithValidation.ValidationErrors is not null)
+                    ModelState.AddValidationErrors(OperationResultWithValidation.ValidationErrors);
                 else
                     ModelState.AddErrors(result.Errors);
 

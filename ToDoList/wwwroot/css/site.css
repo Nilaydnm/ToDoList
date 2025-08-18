@@ -1,22 +1,173 @@
 html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
     font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    background: #f6f8fb;
+    color: #212529;
+}
+
+.app-container {
+    max-width: 1200px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+
+.app-title {
+    font-weight: 800;
+    letter-spacing: .2px;
+    margin-bottom: 18px;
+}
+
+.app-card {
+    background: #fff;
+    border: 1px solid #e7ecf2;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(23,32,46,.05);
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+    .app-card .card-header {
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        border-bottom: 1px solid #edf2f7;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .app-card .card-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .app-card .card-body {
+        padding: 12px 16px;
+    }
+
+    .app-card .card-footer {
+        padding: 10px 16px;
+        background: #fbfdff;
+        border-top: 1px solid #edf2f7;
+    }
+
+.toolbar {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 180px 1fr 180px 180px 160px;
+    align-items: center;
+}
+
+    .toolbar .btn-apply {
+        min-width: 120px;
+    }
+
+    .toolbar .btn-clear {
+        min-width: 110px;
+    }
+
+@media (max-width: 992px) {
+    .toolbar {
+        grid-template-columns: 1fr;
+    }
+}
+
+.badge-deadline {
+    background: #fff0f0;
+    color: #c81e1e;
+    border: 1px solid #ffd7d7;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.badge-soft {
+    background: #eef6ff;
+    color: #0b62c1;
+    border: 1px solid #d7e9ff;
+}
+
+.table-clean thead th {
+    font-weight: 700;
+    border-bottom: 1px solid #e9eef5;
+    background: #fbfdff;
+}
+
+.table-clean tbody tr {
+    transition: background .15s ease;
+}
+
+    .table-clean tbody tr:hover {
+        background: #f8fbff;
+    }
+
+.table-clean td, .table-clean th {
+    vertical-align: middle;
+}
+
+.row-editable input[type="text"],
+.row-editable input[type="datetime-local"],
+.row-editable .form-check-input {
+    pointer-events: none;
+    background: #f7fafc;
+    border-color: #e6edf5;
+}
+
+.row-editable.editing input[type="text"],
+.row-editable.editing input[type="datetime-local"],
+.row-editable.editing .form-check-input {
+    pointer-events: auto;
+    background: #fff;
+    border-color: #b8d2ff;
+    box-shadow: 0 0 0 2px rgba(64,121,255,.12);
+}
+
+.row-actions .btn {
+    margin-left: 6px;
+}
+
+.form-control, .form-select {
+    border-radius: 10px;
+}
+
+.muted {
+    color: #6b7280;
+}
+
+.sticky-head {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+.table-striped > tbody > tr:hover {
+    background: #f8fbff;
+}
+
+.form-control, .form-select {
+    border-radius: 10px;
+}
+
+.row-editable input[type="text"],
+.row-editable input[type="datetime-local"] {
+    pointer-events: none;
+    background: #f7fafc;
+}
+
+.row-editable.editing input[type="text"],
+.row-editable.editing input[type="datetime-local"] {
+    pointer-events: auto;
+    background: #fff;
+    border-color: #b8d2ff;
+    box-shadow: 0 0 0 2px rgba(64,121,255,.12);
+}
+
+.row-actions .btn {
+    margin-left: 6px;
+}
+
+.text-line-through {
+    text-decoration: line-through;
+    color: #6c757d;
 }

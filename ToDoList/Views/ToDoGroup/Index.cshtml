@@ -16,55 +16,80 @@
 }
 
 <style>
-  .deadline-expired { color:#d00000; text-decoration:line-through; font-weight:bold; }
+    .deadline-expired {
+        color: #d00000;
+        text-decoration: line-through;
+        font-weight: bold;
+    }
 </style>
 
 <div class="container mt-4">
-  <h2 class="mb-3">Yeni Yapılacaklar Ekle</h2>
+    <h2 class="mb-3">Yeni Yapılacaklar Ekle</h2>
 
-  @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
 
-  <form method="post" asp-action="Add" class="row g-2 align-items-center mb-4">
-    @Html.AntiForgeryToken()
-    <div class="col-auto">
-      <input type="text" name="title" class="form-control" placeholder="Proje başlığı girin..." />
-    </div>
-    <div class="col-auto">
-      <button type="submit" class="btn btn-primary">Ekle</button>
-    </div>
-    <span class="text-danger">@Html.ValidationMessage("Title")</span>
-  </form>
+    <form method="post" asp-action="Add" class="row g-2 align-items-center mb-4">
+        @Html.AntiForgeryToken()
+        <div class="col-auto">
+            <input type="text" name="title" class="form-control" placeholder="Proje başlığı girin..." />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Ekle</button>
+        </div>
+        <span class="text-danger">@Html.ValidationMessage("Title")</span>
+    </form>
 
-  <form method="get" class="row g-2 align-items-end mb-4">
-    <div class="col-md-3">
-      <label class="form-label fw-bold">Durum</label>
-      <select name="status" class="form-select" onchange="this.form.submit()">
-        @if (status == "all")   { <option value="all" selected>Tümü</option> }   else { <option value="all">Tümü</option> }
-        @if (status == "active"){ <option value="active" selected>Aktif</option>} else { <option value="active">Aktif</option> }
-        @if (status == "done")  { <option value="done" selected>Tamamlanmış</option> } else { <option value="done">Tamamlanmış</option> }
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label fw-bold">Arama</label>
-      <input type="text" name="q" value="@qText" class="form-control" placeholder="Proje veya görev başlığı">
-    </div>
-    <div class="col-md-2">
-      <label class="form-label fw-bold">Başlangıç</label>
-      <input type="date" name="from" class="form-control" value="@fromVal">
-    </div>
-    <div class="col-md-2">
-      <label class="form-label fw-bold">Bitiş</label>
-      <input type="date" name="to" class="form-control" value="@toVal">
-    </div>
-    <div class="col-md-2">
-      <button class="btn btn-secondary w-100" type="submit">Uygula</button>
-    </div>
-  </form>
+    <form method="get" asp-action="Index" class="row g-2 align-items-end mb-4">
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Durum</label>
+            <select name="status" class="form-select" onchange="this.form.submit()">
+                @if (status == "all")
+                {
+                    <option value="all" selected>Tümü</option>
+                }
+                else
+                {
+                    <option value="all">Tümü</option>
+                }
+                @if (status == "active")
+                {
+                    <option value="active" selected>Aktif</option>
+                }
+                else
+                {
+                    <option value="active">Aktif</option>
+                }
+                @if (status == "done")
+                {
+                    <option value="done" selected>Tamamlanmış</option>
+                }
+                else
+                {
+                    <option value="done">Tamamlanmış</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Arama</label>
+            <input type="text" name="q" value="@qText" class="form-control" placeholder="Proje veya görev başlığı">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Başlangıç</label>
+            <input type="date" name="from" class="form-control" value="@fromVal">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Bitiş</label>
+            <input type="date" name="to" class="form-control" value="@toVal">
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button class="btn btn-secondary w-100" type="submit">Uygula</button>
+            <a asp-action="Index" class="btn btn-outline-secondary w-100">Temizle</a>  @* <-- YENİ *@
+        </div>
+    </form>
 
     @if (Model != null && Model.Any(g => !g.IsDeleted))
     {
         var groups = Model.Where(g => g != null).ToList();
-
         var filtered = groups.Where(g => !g.IsDeleted).ToList();
 
         if (status == "active")
@@ -144,15 +169,8 @@
                         </form>
 
                         <div class="d-flex align-items-center">
-                            <a asp-controller="ToDoGroup" asp-action="Detail"
-                               asp-route-id="@group.Id"
-                               asp-route-status="@status"
-                               asp-route-q="@qText"
-                               asp-route-from="@fromVal"
-                               asp-route-to="@toVal"
-                               class="btn btn-sm btn-outline-secondary me-2">
-                                Görevler
-                            </a>
+                            <a asp-controller="ToDoGroup" asp-action="Detail" asp-route-id="@group.Id"
+                               class="btn btn-sm btn-outline-secondary me-2">Görevler</a>
 
                             <form asp-controller="ToDoGroup" asp-action="Delete" method="post"
                                   onsubmit="return confirm('Projeyi silmek istiyor musunuz?')">
@@ -176,14 +194,15 @@
                                     }
                                     else
                                     {
-
                                         @t.Title
                                     }
+
                                     <small class="@(t.Deadline.HasValue && t.Deadline.Value < DateTime.Now && !t.IsCompleted ? "deadline-expired" : "text-muted")">
                                         @(t.Deadline.HasValue ? $"Deadline: {t.Deadline.Value:dd.MM.yyyy HH:mm}" : "-")
                                     </small>
                                 </li>
                             }
+
                         </ul>
                     }
                     else
@@ -198,5 +217,4 @@
     {
         <div class="alert alert-info">Henüz herhangi yapılacaklar başlığı eklenmemiş.</div>
     }
-
 </div>
