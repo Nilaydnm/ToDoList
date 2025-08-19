@@ -1,4 +1,5 @@
-﻿using Business.DTOs;
+﻿using AutoMapper;
+using Business.DTOs;
 using Business.Interfaces;
 using Business.Results;
 using DataAccess.Interfaces;
@@ -14,15 +15,17 @@ namespace Business.Managers
         private readonly IToDoGroupRepository _toDoGroupRepository;
         private readonly IValidator<ToDoGroup> _validator;
         private readonly IToDoRepository _todoRepo;
+        private readonly IMapper _mapper;
 
         public ToDoGroupManager(
             IToDoGroupRepository toDoGroupRepository,
             IValidator<ToDoGroup> validator,
-            IToDoRepository toDoRepository)
+            IToDoRepository toDoRepository,IMapper mapper)
         {
             _toDoGroupRepository = toDoGroupRepository;
             _validator = validator;
             _todoRepo = toDoRepository;
+            _mapper = mapper;
         }
 
         public async Task AddAsync(ToDoGroup group)
@@ -170,29 +173,21 @@ namespace Business.Managers
         public async Task<List<ToDoGroupStatsDto>> GetGroupStatsByUserIdAsync(int userId)
         {
             var groups = await _toDoGroupRepository.GetGroupsWithTasksByUserIdAsync(userId);
-            var list = new List<ToDoGroupStatsDto>();
             var now = DateTime.Now;
 
+            var list = new List<ToDoGroupStatsDto>();
             foreach (var g in groups)
             {
+                var dto = _mapper.Map<ToDoGroupStatsDto>(g);
                 var todos = (g.ToDos ?? new List<ToDo>()).Where(t => !t.IsDeleted).ToList();
-                var total = todos.Count;
-                var completed = todos.Count(t => t.IsCompleted);
-                var active = total - completed;
 
-                var overdue = todos.Count(t => !t.IsCompleted && t.Deadline.HasValue && t.Deadline.Value < now);
+                dto.Total = todos.Count;
+                dto.Completed = todos.Count(t => t.IsCompleted);
+                dto.Active = dto.Total - dto.Completed;
+                dto.Overdue = todos.Count(t => !t.IsCompleted && t.Deadline.HasValue && t.Deadline.Value < now);
 
-                list.Add(new ToDoGroupStatsDto
-                {
-                    GroupId = g.Id,
-                    Title = g.Title ?? string.Empty,
-                    Total = total,
-                    Completed = completed,
-                    Active = active,
-                    Overdue = overdue
-                });
+                list.Add(dto);
             }
-
             return list;
         }
 

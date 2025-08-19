@@ -143,8 +143,7 @@ namespace ToDoList.Controllers
                 var gid = input.GroupId ?? 0;
                 if (gid != 0)
                 {
-                    ViewBag.PreviousTitle = input.Title;
-                    ViewBag.PreviousDeadline = input.Deadline;
+                    
 
                     var group = await _toDoGroupService.GetByIdWithTasksAsync(gid);
                     return View("~/Views/ToDoGroup/Detail.cshtml", group);

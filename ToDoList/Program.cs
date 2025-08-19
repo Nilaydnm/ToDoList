@@ -1,5 +1,7 @@
-﻿using Business.Interfaces;
+﻿using AutoMapper;
+using Business.Interfaces;
 using Business.Managers;
+using Business.Mapping;
 using Business.ValidationRules;
 using DataAccess;
 using DataAccess.Context;
@@ -11,7 +13,10 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 //builder.Services.AddScoped<IValidator<User>, UserValidator>();
@@ -27,6 +32,10 @@ builder.Services.AddScoped<IValidator<ToDo>, ToDoValidator>();
 builder.Services.AddScoped<IToDoRepository, EfToDoRepository>();
 builder.Services.AddScoped<IValidator<ToDoGroup>, ToDoGroupValidator>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(EfGenericRepository<>));
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<MappingProfile>();
+});
 
 
 

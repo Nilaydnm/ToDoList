@@ -1,4 +1,5 @@
-﻿using Business.DTOs;
+﻿using AutoMapper;
+using Business.DTOs;
 using Business.Interfaces;
 using Business.Results;
 using DataAccess.Interfaces;
@@ -15,12 +16,14 @@ namespace Business.Managers
         private readonly IToDoRepository _toDoRepository;
         private readonly IValidator<ToDo> _validator;
         private readonly IToDoGroupRepository _toDoGroupRepository;
+        private readonly IMapper _mapper;
 
-        public ToDoManager(IToDoRepository toDoRepository, IValidator<ToDo> validator, IToDoGroupRepository toDoGroupRepository)
+        public ToDoManager(IToDoRepository toDoRepository, IValidator<ToDo> validator, IToDoGroupRepository toDoGroupRepository,IMapper mapper)
         {
             _toDoRepository = toDoRepository;
             _validator = validator;
             _toDoGroupRepository = toDoGroupRepository;
+            _mapper = mapper;
         }
 
         public async Task AddAsync(ToDo todo)
@@ -161,17 +164,15 @@ namespace Business.Managers
             if (group is null || group.UserId != userId)
                 return new List<ToDoDeadlineDto>();
 
+            var todos = (group.ToDos ?? Enumerable.Empty<ToDo>()).Where(t => !t.IsDeleted).ToList();
+
+            var list = _mapper.Map<List<ToDoDeadlineDto>>(todos);
+
             var now = DateTime.Now;
+            foreach (var d in list)
+                d.Delta = d.Deadline.HasValue ? d.Deadline.Value - now : (TimeSpan?)null;
 
-            var todos = (group.ToDos ?? Enumerable.Empty<ToDo>())
-                .Where(t => !t.IsDeleted);
-
-            return todos.Select(t => new ToDoDeadlineDto
-            {
-                ToDoId = t.Id,
-                Deadline = t.Deadline,
-                Delta = t.Deadline.HasValue ? t.Deadline.Value - now : (TimeSpan?)null
-            }).ToList();
+            return list;
         }
 
 
