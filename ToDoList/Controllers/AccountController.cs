@@ -69,22 +69,45 @@ namespace ToDoList.Controllers
                 if (result == PasswordVerificationResult.Success)
                 {
                     var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, user.Username),
-                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
-                    };
+            {
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+            };
 
                     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var principal = new ClaimsPrincipal(identity);
-
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-
                     return RedirectToAction("Index", "ToDoGroup");
                 }
+                else
+                {
+                    HttpContext.Items["Audit_LoginFailed"] = new { Username = username, Reason = "InvalidPassword" };
+                    HttpContext.Items["Audit_Message"] = "Login failed: Invalid password";
+                }
+            }
+            else
+            {
+                HttpContext.Items["Audit_LoginFailed"] = new { Username = username, Reason = "UserNotFound" };
+                HttpContext.Items["Audit_Message"] = "Login failed: user not found";
             }
 
+            Response.StatusCode = 401;
             ViewBag.Message = "Kullanıcı adı veya şifre hatalı.";
             return View();
+        }
+
+
+
+        [HttpGet("/test-error")]
+        public IActionResult TestError()
+        {
+            throw new InvalidOperationException("Demo amaçlı atılan hata!");
+        }
+
+        [HttpPost("/test-post")]
+        public IActionResult TestPost([FromBody] object body)
+        {
+            throw new Exception("Post test hatası");
         }
 
         public async Task<IActionResult> Logout()

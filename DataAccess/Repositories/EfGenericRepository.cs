@@ -48,7 +48,7 @@ namespace DataAccess.Repositories
         {
             await _table.AddAsync(entity);
         }
-
+        
         public void Update(T entity)
         {
             _table.Update(entity);

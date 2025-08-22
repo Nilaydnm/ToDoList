@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
-
+using ToDoList.Middleware;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,6 +36,8 @@ builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<MappingProfile>();
 });
+builder.Services.AddScoped<ILogRepository, EfLogRepository>();
+builder.Services.AddScoped<ILogService, LogManager>();
 
 
 
@@ -80,8 +82,11 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseMiddleware<RequestLoggingMiddleware>();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}");
+
 
 app.Run();

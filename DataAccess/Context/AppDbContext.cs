@@ -18,12 +18,13 @@ namespace DataAccess.Context
         public DbSet<User> Users { get; set; }
         public DbSet<ToDo> ToDos { get; set; }
         public DbSet<ToDoGroup> ToDoGroups { get; set; }
+        public DbSet<LogEntry> LogEntries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
             base.OnModelCreating(modelBuilder);
-            // var char da ekle, Fluent API ile
+        
             modelBuilder.Entity<User>()
             .Property(u => u.Username)
             .IsRequired()

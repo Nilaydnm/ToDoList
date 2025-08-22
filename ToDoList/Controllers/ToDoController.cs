@@ -143,16 +143,20 @@ namespace ToDoList.Controllers
                 var gid = input.GroupId ?? 0;
                 if (gid != 0)
                 {
-                    
-
                     var group = await _toDoGroupService.GetByIdWithTasksAsync(gid);
+
+                    var stats = await _toDoGroupService.GetGroupStatsByUserIdAsync(uid.Value);
+                    ViewBag.GroupStats = stats.ToDictionary(s => s.GroupId, s => s);
+
                     return View("~/Views/ToDoGroup/Detail.cshtml", group);
                 }
+
                 return RedirectToAction("Index", "ToDoGroup");
             }
 
             return RedirectToAction("Detail", "ToDoGroup", new { id = input.GroupId });
         }
+
 
 
     }
